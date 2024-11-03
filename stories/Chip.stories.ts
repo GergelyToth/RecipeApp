@@ -1,25 +1,30 @@
 import  { type Meta, type StoryObj } from '@storybook/react';
 
-import { State } from '#app/components/ui/state.tsx';
+import { Chips } from '#app/components/ui/chips.tsx';
 
 const meta = {
-  title: 'ui/State',
-  component: State,
-} satisfies Meta<typeof State>;
+  title: 'ui/Chips',
+  component: Chips,
+} satisfies Meta<typeof Chips>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Active: Story = {
   args: {
-    name: 'Tags',
+    name: 'Chicken',
     active: true,
   },
 }
 
 export const Inactive: Story = {
   args: {
-    name: 'Tags',
+    name: 'Chicken',
     active: false,
   },
-}
+  parameters: {
+    backgrounds: {
+      default: 'Dark',
+    },
+  },
+};
