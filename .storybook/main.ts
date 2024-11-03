@@ -22,6 +22,7 @@ const config: StorybookConfig = {
 	},
 	core: {
 		builder: '@storybook/builder-vite',
+		disableTelemetry: true,
 	},
 	async viteFinal(config) {
 		 // Merge custom configuration into the default config
