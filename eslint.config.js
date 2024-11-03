@@ -5,6 +5,9 @@ export default [
 	...defaultConfig,
 	// add custom config objects here:
 	{
+		ignores: ['.storybook/*'],
+	},
+	{
 		files: ['**/tests/**/*.ts'],
 		rules: { 'react-hooks/rules-of-hooks': 'off' },
 	},
