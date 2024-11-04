@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { cn } from '#app/utils/misc.tsx';
-
+import { Icon, type IconName } from '#app/components/ui/icon';
 import { Rate } from '#app/components/ui/rate';
-import { Icon, IconName } from '#app/components/ui/icon';
+
+import { cn } from '#app/utils/misc.tsx';
 
 interface PopularCardProps extends React.HTMLAttributes<HTMLDivElement>{
   name: string;
