@@ -9,6 +9,7 @@ export default {
 	darkMode: 'class',
 	theme: {
 		colors: {
+			transparent: 'transparent',
 			base: {
 				primary: '#4058A0',
 				secondary: '#FF6339',
