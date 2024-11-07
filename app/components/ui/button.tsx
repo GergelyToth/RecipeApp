@@ -18,6 +18,10 @@ const buttonVariants = cva(
 				destructive:
 					'bg-state-error text-base-white', // TODO: do some hover magic for error button
 
+				outlineSquared:
+					'border border-mono-600 text-mono-600 hover:text-mono-700 hover:border-mono-700 rounded-lg',
+				activeTab: 'text-bold rounded-t-lg rounded-b-none bg-mono-300',
+
 				// TODO: delete everything below here
 				secondary:
 					'bg-secondary text-secondary-foreground hover:bg-secondary/80',
