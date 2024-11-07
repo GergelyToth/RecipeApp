@@ -167,3 +167,96 @@ model Connection {
 
   @@unique([providerName, providerId])
 }
+
+model Recipe {
+  id   String @id @default(cuid())
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image   RecipeImage[]
+  ratings Rating[]
+
+  source   Source @relation(fields: [sourceId], references: [id])
+  sourceId String
+
+  ingredients IngredientPerRecipe[]
+
+  instructions String
+  servings     Int
+  prepTime     Int
+  cookTime     Int
+  cookTemp     Int
+  difficulty   String // enum('easy', 'medium', 'hard')
+}
+
+model RecipeImage {
+  id          String  @id @default(cuid())
+  altText     String?
+  contentType String
+  blob        Bytes
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipeId String
+
+  // non-unique foreign key
+  @@index([recipeId])
+}
+
+model Rating {
+  id     String @id @default(cuid())
+  rating Float
+
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipeId String
+
+  createdAt DateTime @default(now())
+
+  @@index([recipeId])
+}
+
+model Source {
+  id   String @id @default(cuid())
+  name String
+  icon String
+
+  recipes Recipe[]
+}
+
+model Ingredient {
+  id   String @id @default(cuid())
+  name String @unique
+
+  defaultUnit Unit?   @relation(fields: [unitId], references: [id])
+  unitId      String?
+
+  recipes IngredientPerRecipe[]
+}
+
+model Unit {
+  id   String @id @default(cuid())
+  name String @unique
+  type String // enum('weight', 'volume', 'count')
+
+  ingredients Ingredient[]
+  perRecipe   IngredientPerRecipe[]
+}
+
+model IngredientPerRecipe {
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipeId String
+
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId String
+
+  quantity Float
+
+  unit   Unit?  @relation(fields: [unitId], references: [id])
+  unitId String
+
+  @@unique([recipeId, ingredientId])
+}

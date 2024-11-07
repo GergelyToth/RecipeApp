@@ -1,34 +1,63 @@
-import { Icon } from "#app/components/ui/icon.tsx";
-import { type MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
-import { type IconName } from "#app/components/ui/icon.tsx";
+import { invariantResponse } from "@epic-web/invariant";
+import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
+import { Link, useLoaderData } from "@remix-run/react";
+import { type FC, useState } from "react";
+import { Button } from "#app/components/ui/button.tsx";
+import { Icon, type IconName } from "#app/components/ui/icon.tsx";
+// import { Infobox } from "#app/components/ui/infobox.tsx";
 import { Rate } from "#app/components/ui/rate.tsx";
 
-import { cn } from "#app/utils/misc.tsx";
-import { Infobox } from "#app/components/ui/infobox.tsx";
 import { State } from "#app/components/ui/state.tsx";
-import { useState } from "react";
-import { Button } from "#app/components/ui/button.tsx";
+import { prisma } from "#app/utils/db.server.ts";
+import { cn } from "#app/utils/misc.tsx";
 
-export const meta: MetaFunction = () => [{
-  title: 'Recipe - 1',
+export const meta: MetaFunction<typeof loader> = ({ data }) => [{
+  title: `Recipe - ${data?.recipe.name}`,
 }];
 
-export default function SingleRecipe() {
-  const [currentTab, setCurrentTab] = useState<'method' | 'ingredients'>('method')
-  const imgUrl = 'https://picsum.photos/500/500';
-  const title = 'Perfect homemade pancake';
-  const rating = 4.3;
+export async function loader({ params }: LoaderFunctionArgs) {
+  const recipe = await prisma.recipe.findFirst({
+    select: {
+      id: true,
+      name: true,
+      ratings: { select: { rating: true } },
+      source: { select: { name: true, icon: true } },
+      ingredients: {
+        select: {
+          ingredientId: true,
+          quantity: true,
+          unit: { select: { name: true } },
+          ingredient: { select: { name: true } },
+        },
+      },
+      instructions: true,
+    },
+    where: {
+      id: params.recipe,
+    },
+  });
 
+  invariantResponse(recipe, 'Recipe not found', { status: 404 });
+
+  return json({ recipe });
+}
+
+export default function SingleRecipe() {
+  const data = useLoaderData<typeof loader>();
+  const { recipe } = data;
+
+  const [currentTab, setCurrentTab] = useState<'instructions' | 'ingredients'>('instructions')
+
+  const imgUrl = 'https://picsum.photos/500/500'; // TODO: get img from db
+  const rating = recipe.ratings.reduce((sum, current) => sum += current.rating, 0) / recipe.ratings.length;
   // source
-  const sourceImgUrl = 'https://picsum.photos/100/100';
-  const sourceName = 'Mom';
 
   type Tag = {
     iconName: IconName;
     name: string;
   }
 
+  // TODO: will delete this. KEKW
   const tags: Tag[] = [
     {
       iconName: 'outline/candle-2',
@@ -61,7 +90,7 @@ export default function SingleRecipe() {
         <div className={cn('absolute -top-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-b from-base-black to-transparent')} />
         <div className='absolute -bottom-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-t from-base-black to-transparent' />
 
-        <img src={imgUrl} alt={title} className={cn('-z-20 absolute inset-0 w-full h-full object-cover object-center')} />
+        <img src={imgUrl} alt={recipe.name} className={cn('-z-20 absolute inset-0 w-full h-full object-cover object-center')} />
 
         <div className={cn('flex justify-between flex-row self-end w-full px-4 py-3')}>
           <Rate rating={rating} />
@@ -78,29 +107,29 @@ export default function SingleRecipe() {
       {/* Source */}
       <div className={cn('flex flex-row gap-1 mt-3')}>
         <div className={cn('flex flex-shrink-0 bg-mono-800 rounded-r-full w-16 justify-end')}>
-          <img src={sourceImgUrl} alt={sourceName} className={cn('w-12 h-12 rounded-full')} />
+          <Icon name={recipe.source.icon} className={cn('w-12 h-12 rounded-full')} />
         </div>
         <div className={cn('flex place-items-center px-5 font-bold flex-grow bg-mono-800 rounded-l-full')}>
-          {sourceName}
+          {recipe.source.name}
         </div>
       </div>
 
       {/* Page Title */}
-      <h1 className={cn('mt-3 mx-2 px-3 py-2 rounded-lg bg-base-primary  text-base-white text-body-1')}>{title}</h1>
+      <h1 className={cn('mt-3 mx-2 px-3 py-2 rounded-lg bg-base-primary  text-base-white text-body-1')}>{recipe.name}</h1>
 
       {/* Tags */}
-      <div className={cn('mt-3 mx-2 px-3 py-1.5 bg-mono-400 rounded-lg flex gap-1 flex-wrap')}>
+      {/* <div className={cn('mt-3 mx-2 px-3 py-1.5 bg-mono-400 rounded-lg flex gap-1 flex-wrap')}>
         {tags.map((tag, index) => <Infobox key={`${tag.name}-${index}`} iconName={tag.iconName} info={tag.name} />)}
-      </div>
+      </div> */}
 
       {/* Tabs */}
       <div className={cn('mt-3 mx-2 flex gap-1')}>
-        <div className={cn(currentTab === 'method' ? 'rounded-t-lg bg-mono-300 pb-1' : '')}>
+        <div className={cn(currentTab === 'instructions' ? 'rounded-t-lg bg-mono-300 pb-1' : '')}>
           <Button
-            onClick={() => setCurrentTab('method')}
-            variant={currentTab === 'method' ? 'activeTab' : 'outlineSquared'}
+            onClick={() => setCurrentTab('instructions')}
+            variant={currentTab === 'instructions' ? 'activeTab' : 'outlineSquared'}
           >
-            <State active={currentTab === 'method'} name="Method" />
+            <State active={currentTab === 'instructions'} name="Instructions" />
           </Button>
         </div>
         <div className={cn(currentTab === 'ingredients' ? 'rounded-t-lg bg-mono-300 pb-1' : '')}>
@@ -114,19 +143,22 @@ export default function SingleRecipe() {
       </div>
 
       <div className={cn('mx-2 rounded-b-lg rounded-tr-lg bg-mono-300 text-base-black py-5 px-5')}>
-        {currentTab === 'method' && (
+        {currentTab === 'instructions' && (
           <>
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. Similique veritatis nulla nemo excepturi repellat eveniet unde? Sit eaque, ab a ipsum, quidem quam corporis iusto repellendus hic quis sint deleniti!
+            {recipe.instructions}
           </>
         )}
         {currentTab === 'ingredients' && (
           <>
             <ul>
-              <li>1</li>
-              <li>2</li>
-              <li>3</li>
-              <li>4</li>
-              <li>5</li>
+              {recipe.ingredients.map((ingredient => (
+                <Ingredient
+                  key={ingredient.ingredientId}
+                  name={ingredient.ingredient.name}
+                  unit={ingredient.unit?.name || ''}
+                  quantity={ingredient.quantity}
+                />
+              )))}
             </ul>
           </>
         )}
@@ -134,3 +166,9 @@ export default function SingleRecipe() {
     </div>
   );
 }
+
+const Ingredient: FC<{ quantity: number, unit: string, name: string }> = ({ quantity, unit, name }) => (
+  <li>
+    {quantity}{unit} - {name}
+  </li>
+);
