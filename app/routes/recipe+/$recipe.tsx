@@ -21,7 +21,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
       id: true,
       name: true,
       ratings: { select: { rating: true } },
-      source: { select: { name: true, icon: true } },
+      source: { select: { name: true, icon: true, } },
       ingredients: {
         select: {
           ingredientId: true,
@@ -107,10 +107,11 @@ export default function SingleRecipe() {
       {/* Source */}
       <div className={cn('flex flex-row gap-1 mt-3')}>
         <div className={cn('flex flex-shrink-0 bg-mono-800 rounded-r-full w-16 justify-end')}>
-          <Icon name={recipe.source.icon} className={cn('w-12 h-12 rounded-full')} />
+          {/* TODO: change to question mark */}
+          <Icon name={recipe.source?.icon || 'outline/sun'} className={cn('w-12 h-12 rounded-full')} />
         </div>
         <div className={cn('flex place-items-center px-5 font-bold flex-grow bg-mono-800 rounded-l-full')}>
-          {recipe.source.name}
+          {recipe.source?.name || ''}
         </div>
       </div>
 

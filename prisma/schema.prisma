@@ -178,8 +178,8 @@ model Recipe {
   image   RecipeImage[]
   ratings Rating[]
 
-  source   Source @relation(fields: [sourceId], references: [id])
-  sourceId String
+  source   Source? @relation(fields: [sourceId], references: [id])
+  sourceId String?
 
   ingredients IngredientPerRecipe[]
 
