@@ -44,5 +44,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   console.log('created a new recipe', JSON.stringify(createdRecipe));
 
-  return redirect(`/recipe/${createdRecipe.id}`);
+  // for debugging, don't redirect to the newly created recipe
+  // return redirect(`/recipe/${createdRecipe.id}`);
+  console.log(`/recipe/${createdRecipe.id}`)
+  return null;
 }

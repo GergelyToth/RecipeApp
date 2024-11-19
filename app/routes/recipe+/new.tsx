@@ -5,10 +5,15 @@ import { z } from 'zod';
 import { Field, TextareaField } from '#app/components/forms.tsx';
 import { Button } from '#app/components/ui/button.tsx';
 import { action } from './new.server.tsx';
+import { cn } from '#app/utils/misc.tsx';
 
 export const RecipeNewSchema = z.object({
   name: z.string(),
   instructions: z.string(),
+  serves: z.number().default(0),
+  cookHours: z.number().default(0),
+  cookMinutes: z.number().default(0),
+  difficulty: z.enum(['easy', 'medium', 'hard']).default('easy'),
 });
 
 export { action };
@@ -32,6 +37,8 @@ export default function NewRecipe() {
     },
   });
 
+  // TODO: rewrite the ui with https://ui.shadcn.com/docs/components/form
+
   return (
     <div>
       New recipe
@@ -41,15 +48,51 @@ export default function NewRecipe() {
         {...getFormProps(form)}
       >
         <Field
-          labelProps={{ children: 'Recipe Name' }}
+          labelProps={{ children: 'Name' }}
           inputProps={{ ...getInputProps(fields.name, { type: 'text' }) }}
           errors={fields.name.errors}
         />
+
         <TextareaField
           labelProps={{ children: 'Instructions' }}
           textareaProps={{ ...getTextareaProps(fields.instructions) }}
           errors={fields.instructions.errors}
         />
+
+        <Field
+          labelProps={{ children: 'Serves' }}
+          inputProps={{ defaultValue: 0, ...getInputProps(fields.serves, { type: 'number' }) }}
+          errors={fields.serves.errors}
+        />
+
+        <fieldset about='Cook Time' className={cn('flex w-full gap-4')}>
+          <Field
+            labelProps={{ children: 'Hours' }}
+            inputProps={{ defaultValue: 0, ...getInputProps(fields.cookHours, { type: 'number' }) }}
+            errors={fields.cookHours.errors}
+            className={cn('w-full')}
+          />
+          <Field
+            labelProps={{ children: 'Minutes' }}
+            inputProps={{ defaultValue: 0, ...getInputProps(fields.cookMinutes, { type: 'number' }) }}
+            errors={fields.cookMinutes.errors}
+            className={cn('w-full')}
+          />
+        </fieldset>
+
+        <Field
+          labelProps={{ children: 'Easy' }}
+          inputProps={{ ...getInputProps(fields.difficulty, { type: 'radio', value: 'easy' }), id: 'recipe-editor-difficulty-easy' }}
+        />
+        <Field
+          labelProps={{ children: 'Medium' }}
+          inputProps={{ ...getInputProps(fields.difficulty, { type: 'radio', value: 'medium' }), id: 'recipe-editor-difficulty-medium' }}
+        />
+        <Field
+          labelProps={{ children: 'Hard' }}
+          inputProps={{ ...getInputProps(fields.difficulty, { type: 'radio', value: 'hard' }), id: 'recipe-editor-difficulty-hard' }}
+        />
+
         <Button type='submit' variant='outlineLight' className='mt-4'>Submit</Button>
       </Form>
     </div>
