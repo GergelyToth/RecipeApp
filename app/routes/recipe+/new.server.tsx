@@ -8,7 +8,12 @@ import {
 import { prisma } from "#app/utils/db.server.ts";
 import { RecipeNewSchema } from './new.tsx';
 
+function convertTimeToMinutes(hours: number, minutes: number) {
+  return (hours * 60) + minutes;
+}
+
 export async function action({ request }: ActionFunctionArgs) {
+  console.log('asdf');
   const formData = await request.formData();
   const submission = parseWithZod(formData, {
     schema: RecipeNewSchema,
@@ -24,28 +29,31 @@ export async function action({ request }: ActionFunctionArgs) {
   const {
     name,
     instructions,
+    servings,
+    cookTemp,
+    cookHours,
+    cookMinutes,
+    prepHours,
+    prepMinutes,
+    difficulty,
   } = submission.value;
+
 
   let newRecipe: Prisma.RecipeCreateInput;
   newRecipe = {
     name,
     instructions,
     // ingredients
-    cookTemp: 0,
-    cookTime: 0,
-    difficulty: 'easy',
-    prepTime: 0,
-    servings: 0,
+    cookTemp,
+    cookTime: convertTimeToMinutes(cookHours, cookMinutes),
+    difficulty,
+    prepTime: convertTimeToMinutes(prepHours, prepMinutes),
+    servings,
   };
 
   const createdRecipe = await prisma.recipe.create({
     data: { ...newRecipe },
   });
 
-  console.log('created a new recipe', JSON.stringify(createdRecipe));
-
-  // for debugging, don't redirect to the newly created recipe
-  // return redirect(`/recipe/${createdRecipe.id}`);
-  console.log(`/recipe/${createdRecipe.id}`)
-  return null;
+  return redirect(`/recipe/${createdRecipe.id}`);
 }
