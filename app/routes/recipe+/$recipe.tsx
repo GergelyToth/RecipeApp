@@ -3,7 +3,7 @@ import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/nod
 import { Link, useLoaderData } from "@remix-run/react";
 import { type FC, useState } from "react";
 import { Button } from "#app/components/ui/button.tsx";
-import { Icon, type IconName } from "#app/components/ui/icon.tsx";
+import { Icon } from "#app/components/ui/icon.tsx";
 // import { Infobox } from "#app/components/ui/infobox.tsx";
 import { Rate } from "#app/components/ui/rate.tsx";
 
@@ -51,35 +51,6 @@ export default function SingleRecipe() {
   const imgUrl = 'https://picsum.photos/500/500'; // TODO: get img from db
   const rating = recipe.ratings.reduce((sum, current) => sum += current.rating, 0) / recipe.ratings.length;
   // source
-
-  type Tag = {
-    iconName: IconName;
-    name: string;
-  }
-
-  // TODO: will delete this. KEKW
-  const tags: Tag[] = [
-    {
-      iconName: 'outline/candle-2',
-      name: 'Low Calory'
-    },
-    {
-      iconName: 'outline/candle-2',
-      name: 'Simple'
-    },
-    {
-      iconName: 'outline/candle-2',
-      name: '48 Min'
-    },
-    {
-      iconName: 'outline/star',
-      name: '435'
-    },
-    {
-      iconName: 'outline/candle-2',
-      name: 'Keto'
-    },
-  ];
 
   return (
     <div>

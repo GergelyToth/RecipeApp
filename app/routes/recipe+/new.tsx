@@ -1,12 +1,13 @@
 import { getFormProps, getInputProps, getTextareaProps, useForm } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
-import { Form, json, type MetaFunction } from '@remix-run/react';
+import { Form, json, useLoaderData, type MetaFunction } from '@remix-run/react';
 import { z } from 'zod';
 import { ErrorList, Field, TextareaField } from '#app/components/forms.tsx';
 import { Button } from '#app/components/ui/button.tsx';
 import { Label } from '#app/components/ui/label.tsx';
 import { RadioGroup, RadioGroupItem } from '#app/components/ui/radio-group.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#app/components/ui/tabs.tsx';
+import { prisma } from '#app/utils/db.server.ts';
 import { cn } from '#app/utils/misc.tsx';
 import { action } from './new.server.tsx';
 
@@ -25,15 +26,23 @@ export const RecipeNewSchema = z.object({
 export { action };
 
 export async function loader() {
-  return json({});
+  const ingredients = await prisma.ingredient.findMany({
+    select: {
+      id: true,
+      name: true,
+      defaultUnit: true,
+    }
+  });
+  return json({ ingredients });
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [{
+export const meta: MetaFunction<typeof loader> = () => [{
   title: `New Recipe`,
 }];
 
 // TODO: check if authenticated when we have users
 export default function NewRecipe() {
+  const { ingredients } = useLoaderData<typeof loader>();
   const [form, fields] = useForm({
     id: 'recipe-editor',
     constraint: getZodConstraint(RecipeNewSchema),
@@ -177,9 +186,7 @@ export default function NewRecipe() {
             </div>
           </TabsContent>
 
-          <TabsContent value='ingredients'>
-
-          </TabsContent>
+          <TabsContent value='ingredients'></TabsContent>
 
           <TabsContent value='instructions'>
             <TextareaField
