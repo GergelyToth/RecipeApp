@@ -1,10 +1,21 @@
 import { getFormProps, getInputProps, getTextareaProps, useForm } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import { Form, json, useLoaderData, type MetaFunction } from '@remix-run/react';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
 import { z } from 'zod';
 import { ErrorList, Field, TextareaField } from '#app/components/forms.tsx';
 import { Button } from '#app/components/ui/button.tsx';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '#app/components/ui/command.tsx';
 import { Label } from '#app/components/ui/label.tsx';
+import { Popover, PopoverContent, PopoverTrigger } from '#app/components/ui/popover.tsx';
 import { RadioGroup, RadioGroupItem } from '#app/components/ui/radio-group.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#app/components/ui/tabs.tsx';
 import { prisma } from '#app/utils/db.server.ts';
@@ -43,7 +54,8 @@ export const meta: MetaFunction<typeof loader> = () => [{
 // TODO: check if authenticated when we have users
 export default function NewRecipe() {
   const { ingredients } = useLoaderData<typeof loader>();
-  // console.log(JSON.stringify(ingredients));
+  const [open, setOpen] = useState(false);
+  const [comboboxValue, setComboboxValue] = useState('');
   const [form, fields] = useForm({
     id: 'recipe-editor',
     constraint: getZodConstraint(RecipeNewSchema),
@@ -62,7 +74,7 @@ export default function NewRecipe() {
         {...getFormProps(form)}
       >
 
-        <Tabs defaultValue='information' className={cn('w-full')}>
+        <Tabs defaultValue='ingredients' className={cn('w-full')}>
           <TabsList className={cn('w-full')}>
             <TabsTrigger value='information' className={cn('grow')}>Infomation</TabsTrigger>
             <TabsTrigger value='ingredients' className={cn('grow')}>Ingredients</TabsTrigger>
@@ -187,7 +199,58 @@ export default function NewRecipe() {
             </div>
           </TabsContent>
 
-          <TabsContent value='ingredients'></TabsContent>
+          <TabsContent value='ingredients'>
+
+            {/* TODO: should put this combobox into its own file */}
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant='outlineLight'
+                  role='combobox'
+                  aria-expanded={open}
+                  className={cn('w-[400px] justify-between')}
+                >
+                  {comboboxValue ? ingredients.find(ingredient => ingredient.name === comboboxValue)?.name : 'Select Ingredient'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className={cn('w-[400px] p-0')}>
+                <Command>
+                  <CommandInput placeholder='Search ingredient...' />
+                  <CommandList>
+                    <CommandEmpty>No ingredient found.</CommandEmpty>{/* TODO: add logic to create new ingredient on the fly */}
+                    <CommandGroup>
+                      {ingredients.map((ingredient) => (
+                        <CommandItem
+                          key={ingredient.id}
+                          value={ingredient.name}
+                          onSelect={(currentValue) => {
+                            setComboboxValue(currentValue === comboboxValue ? '' : currentValue);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check className={cn('mr-2 h-4 w-4', comboboxValue === ingredient.name ? 'opacity-100' : 'opacity-0')} />
+                          {ingredient.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+
+              <Button
+                variant='outlineLight'
+                role='button'
+                onClick={() => {
+                  // TODO: clear out the combobox value
+                  // TODO: add the ingredient to a new form where you can fill out the unit, measurements, etc. or remove it from the list
+                }}
+              >
+                Add Ingredient
+              </Button>
+            </Popover>
+
+
+          </TabsContent>
 
           <TabsContent value='instructions'>
             <TextareaField
