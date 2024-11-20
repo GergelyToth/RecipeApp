@@ -1,15 +1,15 @@
-import { invariantResponse } from "@epic-web/invariant";
-import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
-import { type FC, useState } from "react";
-import { Button } from "#app/components/ui/button.tsx";
-import { Icon } from "#app/components/ui/icon.tsx";
+import { invariantResponse } from '@epic-web/invariant';
+import { json, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
+import { type FC, useState } from 'react';
+import { Button } from '#app/components/ui/button.tsx';
+import { Icon } from '#app/components/ui/icon.tsx';
 // import { Infobox } from "#app/components/ui/infobox.tsx";
-import { Rate } from "#app/components/ui/rate.tsx";
+import { Rate } from '#app/components/ui/rate.tsx';
 
-import { State } from "#app/components/ui/state.tsx";
-import { prisma } from "#app/utils/db.server.ts";
-import { cn } from "#app/utils/misc.tsx";
+import { State } from '#app/components/ui/state.tsx';
+import { prisma } from '#app/utils/db.server.ts';
+import { cn } from '#app/utils/misc.tsx';
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [{
   title: `Recipe - ${data?.recipe.name}`,
@@ -21,7 +21,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
       id: true,
       name: true,
       ratings: { select: { rating: true } },
-      source: { select: { name: true, icon: true, } },
+      source: { select: { name: true, icon: true } },
       ingredients: {
         select: {
           ingredientId: true,
@@ -46,7 +46,7 @@ export default function SingleRecipe() {
   const data = useLoaderData<typeof loader>();
   const { recipe } = data;
 
-  const [currentTab, setCurrentTab] = useState<'instructions' | 'ingredients'>('instructions')
+  const [currentTab, setCurrentTab] = useState<'instructions' | 'ingredients'>('instructions');
 
   const imgUrl = 'https://picsum.photos/500/500'; // TODO: get img from db
   const rating = recipe.ratings.reduce((sum, current) => sum += current.rating, 0) / recipe.ratings.length;

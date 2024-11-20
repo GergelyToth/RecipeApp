@@ -17,7 +17,7 @@ const State = React.forwardRef<HTMLDivElement, StateProps>(({name, active, class
     >
       {name}
     </div>
-  )
+  );
 });
 State.displayName = 'State';
 

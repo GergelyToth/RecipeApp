@@ -31,18 +31,19 @@ export async function loader() {
       id: true,
       name: true,
       defaultUnit: true,
-    }
+    },
   });
   return json({ ingredients });
 }
 
 export const meta: MetaFunction<typeof loader> = () => [{
-  title: `New Recipe`,
+  title: 'New Recipe',
 }];
 
 // TODO: check if authenticated when we have users
 export default function NewRecipe() {
   const { ingredients } = useLoaderData<typeof loader>();
+  // console.log(JSON.stringify(ingredients));
   const [form, fields] = useForm({
     id: 'recipe-editor',
     constraint: getZodConstraint(RecipeNewSchema),
@@ -119,7 +120,7 @@ export default function NewRecipe() {
             </fieldset>
 
             <Field
-              labelProps={{ children: `Cook Tempreature (C°)` }}
+              labelProps={{ children: 'Cook Tempreature (C°)' }}
               inputProps={{ defaultValue: 0, ...getInputProps(fields.cookTemp, { type: 'number' }) }}
             />
 

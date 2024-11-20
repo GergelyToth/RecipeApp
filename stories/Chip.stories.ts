@@ -15,7 +15,7 @@ export const Active: Story = {
     name: 'Chicken',
     active: true,
   },
-}
+};
 
 export const Inactive: Story = {
   args: {

@@ -15,11 +15,11 @@ export const Active: Story = {
     name: 'Tags',
     active: true,
   },
-}
+};
 
 export const Inactive: Story = {
   args: {
     name: 'Tags',
     active: false,
   },
-}
+};

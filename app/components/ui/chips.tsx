@@ -13,7 +13,7 @@ const Chips = ({ name, active, className, ...props }: ChipsProps) => {
       {name}
     </div>
   );
-}
+};
 Chips.displayName = 'Chips';
 
 export { Chips };

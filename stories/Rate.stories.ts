@@ -14,4 +14,4 @@ export const Primary: Story = {
   args: {
     rating: 4.8,
   },
-}
+};

@@ -18,4 +18,4 @@ export const Primary: Story = {
     rating: 4.8,
     iconName: 'outline/archive',
   },
-}
+};

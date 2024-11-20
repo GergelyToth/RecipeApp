@@ -14,7 +14,7 @@ const Infobox = ({ info, iconName, className, ...props }: InfoboxProps) => {
       <span>{info}</span>
     </div>
   );
-}
+};
 Infobox.displayName = 'Search';
 
 export { Infobox };

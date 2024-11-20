@@ -1,11 +1,11 @@
-import { parseWithZod } from "@conform-to/zod";
-import { type Prisma } from "@prisma/client";
+import { parseWithZod } from '@conform-to/zod';
+import { type Prisma } from '@prisma/client';
 import {
   type ActionFunctionArgs,
   json,
   redirect,
-} from "@remix-run/node";
-import { prisma } from "#app/utils/db.server.ts";
+} from '@remix-run/node';
+import { prisma } from '#app/utils/db.server.ts';
 import { RecipeNewSchema } from './new.tsx';
 
 function convertTimeToMinutes(hours: number, minutes: number) {

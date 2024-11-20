@@ -13,6 +13,6 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {
   args: {
     iconName: 'outline/arrow-circle-down',
-    info: 'Low Calory'
+    info: 'Low Calory',
   },
 };
