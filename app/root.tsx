@@ -160,7 +160,7 @@ function Document({
         )}
         <Links />
       </head>
-      <body className="bg-background text-foreground">
+      <body className="bg-background text-foreground w-screen overflow-x-hidden">
         {children}
         <script
           nonce={nonce}
