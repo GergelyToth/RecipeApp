@@ -36,15 +36,42 @@ export async function action({ request }: ActionFunctionArgs) {
     prepHours,
     prepMinutes,
     difficulty,
+    ingredients,
   } = submission.value;
 
+  // process the ingredients. If there is one without an ingredientId, we should create it first, so we can link it to this recipe correctly
+
+  // call Promise.all in case we need to create a new ingredient, which is an async operation, and we want the var to not be a promise
+  const processedIngredients = await Promise.all(ingredients.map(async (ingredient) => {
+    let {ingredientId} = ingredient;
+    if (!ingredientId) {
+      const newIngredient = await prisma.ingredient.create({
+        data: {
+          name: ingredient.name,
+          unitId: ingredient.unitId,
+        },
+      });
+
+      ingredientId = newIngredient.id;
+    }
+
+    return ({
+      ingredientId,
+      quantity: ingredient.quantity,
+      unitId: ingredient.unitId,
+    });
+  }));
 
   let newRecipe: Prisma.RecipeCreateInput;
   newRecipe = {
     name,
     instructions,
-    // ingredients
-    cookTemp,
+    ingredients: {
+      create: [
+        ...processedIngredients,
+      ],
+    },
+    cookTemp, // TODO: change schema from number to string, to accomodate for "low/high" cooking temp
     cookTime: convertTimeToMinutes(cookHours, cookMinutes),
     difficulty,
     prepTime: convertTimeToMinutes(prepHours, prepMinutes),

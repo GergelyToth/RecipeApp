@@ -1,8 +1,8 @@
-import { getFormProps, getInputProps, getTextareaProps, useForm } from '@conform-to/react';
+import { getFieldsetProps, getFormProps, getInputProps, getTextareaProps, useForm } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import { Form, json, useLoaderData, type MetaFunction } from '@remix-run/react';
 import { Check } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { z } from 'zod';
 import { ErrorList, Field, TextareaField } from '#app/components/forms.tsx';
 import { Button } from '#app/components/ui/button.tsx';
@@ -14,10 +14,18 @@ import {
   CommandItem,
   CommandList,
 } from '#app/components/ui/command.tsx';
+import { Icon } from '#app/components/ui/icon.tsx';
+import { Input } from '#app/components/ui/input.tsx';
 import { Label } from '#app/components/ui/label.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '#app/components/ui/popover.tsx';
 import { RadioGroup, RadioGroupItem } from '#app/components/ui/radio-group.tsx';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '#app/components/ui/tabs.tsx';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#app/components/ui/select.tsx';
 import { prisma } from '#app/utils/db.server.ts';
 import { cn } from '#app/utils/misc.tsx';
 import { action } from './new.server.tsx';
@@ -32,6 +40,14 @@ export const RecipeNewSchema = z.object({
   prepMinutes: z.number().int().min(0).max(59).default(0),
   cookTemp: z.number().int().min(0).default(0),
   difficulty: z.enum(['easy', 'medium', 'hard']),
+  ingredients: z.array(
+    z.object({
+      ingredientId: z.string().optional(),
+      name: z.string(),
+      quantity: z.number(),
+      unitId: z.string(),
+    }),
+  ),
 });
 
 export { action };
@@ -43,8 +59,18 @@ export async function loader() {
       name: true,
       defaultUnit: true,
     },
+    orderBy: {
+      name: 'asc',
+    },
   });
-  return json({ ingredients });
+
+  const units = await prisma.unit.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+  return json({ ingredients, units });
 }
 
 export const meta: MetaFunction<typeof loader> = () => [{
@@ -53,9 +79,13 @@ export const meta: MetaFunction<typeof loader> = () => [{
 
 // TODO: check if authenticated when we have users
 export default function NewRecipe() {
-  const { ingredients } = useLoaderData<typeof loader>();
+  const { ingredients, units } = useLoaderData<typeof loader>();
+  type Ingredient = typeof ingredients[0];
+
   const [open, setOpen] = useState(false);
-  const [comboboxValue, setComboboxValue] = useState('');
+  const [comboboxValue, setComboboxValue] = useState<Ingredient>(); // TODO: is this even correct?
+  const ingredientSearchRef = useRef<HTMLInputElement>(null);
+
   const [form, fields] = useForm({
     id: 'recipe-editor',
     constraint: getZodConstraint(RecipeNewSchema),
@@ -64,6 +94,32 @@ export default function NewRecipe() {
       return parseWithZod(formData, { schema: RecipeNewSchema });
     },
   });
+  const ingredientFields = fields.ingredients.getFieldList();
+
+  const addIngredientToRecipe = (selectedIngredient: Ingredient): void => {
+    setComboboxValue(undefined);
+    form.insert({
+      name: fields.ingredients.name,
+      defaultValue: {
+        ingredientId: selectedIngredient.id,
+        name: selectedIngredient.name,
+        quantity: 0,
+        unitId: selectedIngredient?.defaultUnit?.id,
+      },
+    });
+  };
+
+  const addNewIngredientToRecipe = (ingredientName: string): void => {
+    form.insert({
+      name: fields.ingredients.name,
+      defaultValue: {
+        ingredientId: undefined,
+        name: ingredientName,
+        quantity: 0,
+        unitId: undefined,
+      },
+    });
+  };
 
   return (
     <div>
@@ -73,195 +129,225 @@ export default function NewRecipe() {
         method='POST'
         {...getFormProps(form)}
       >
+        <Field
+          labelProps={{ children: 'Name' }}
+          inputProps={{ ...getInputProps(fields.name, { type: 'text' }) }}
+          errors={fields.name.errors}
+        />
 
-        <Tabs defaultValue='ingredients' className={cn('w-full')}>
-          <TabsList className={cn('w-full')}>
-            <TabsTrigger value='information' className={cn('grow')}>Infomation</TabsTrigger>
-            <TabsTrigger value='ingredients' className={cn('grow')}>Ingredients</TabsTrigger>
-            <TabsTrigger value='instructions' className={cn('grow')}>Instructions</TabsTrigger>
-          </TabsList>
+        <Field
+          labelProps={{ children: 'Servings' }}
+          inputProps={{ defaultValue: 0, ...getInputProps(fields.servings, { type: 'number' }) }}
+          errors={fields.servings.errors}
+        />
 
-          <TabsContent value='information'>
-            <Field
-              labelProps={{ children: 'Name' }}
-              inputProps={{ ...getInputProps(fields.name, { type: 'text' }) }}
-              errors={fields.name.errors}
-            />
-
-            <Field
-              labelProps={{ children: 'Servings' }}
-              inputProps={{ defaultValue: 0, ...getInputProps(fields.servings, { type: 'number' }) }}
-              errors={fields.servings.errors}
-            />
-
-            <Label htmlFor={fields.prepHours.id}>
-              Prep Time
-            </Label>
-            <fieldset about='Prep Time' className={cn('flex w-full gap-4')}>
-              <Field
-                labelProps={{ children: 'Hours' }}
-                inputProps={{ defaultValue: 0, ...getInputProps(fields.prepHours, { type: 'number' }) }}
-                errors={fields.prepHours.errors}
-                className={cn('w-full')}
-              />
-              <Field
-                labelProps={{ children: 'Minutes' }}
-                inputProps={{ defaultValue: 0, ...getInputProps(fields.prepMinutes, { type: 'number' }) }}
-                errors={fields.prepMinutes.errors}
-                className={cn('w-full')}
-              />
-            </fieldset>
+        <Label htmlFor={fields.prepHours.id}>
+          Prep Time
+        </Label>
+        <fieldset about='Prep Time' className={cn('flex w-full gap-4')}>
+          <Field
+            labelProps={{ children: 'Hours' }}
+            inputProps={{ defaultValue: 0, ...getInputProps(fields.prepHours, { type: 'number' }) }}
+            errors={fields.prepHours.errors}
+            className={cn('w-full')}
+          />
+          <Field
+            labelProps={{ children: 'Minutes' }}
+            inputProps={{ defaultValue: 0, ...getInputProps(fields.prepMinutes, { type: 'number' }) }}
+            errors={fields.prepMinutes.errors}
+            className={cn('w-full')}
+          />
+        </fieldset>
 
 
-            <Label htmlFor={fields.cookHours.id}>
-              Cook Time
-            </Label>
-            <fieldset about='Cook Time' className={cn('flex w-full gap-4')}>
-              <Field
-                labelProps={{ children: 'Hours' }}
-                inputProps={{ defaultValue: 0, ...getInputProps(fields.cookHours, { type: 'number' }) }}
-                errors={fields.cookHours.errors}
-                className={cn('w-full')}
-              />
-              <Field
-                labelProps={{ children: 'Minutes' }}
-                inputProps={{ defaultValue: 0, ...getInputProps(fields.cookMinutes, { type: 'number' }) }}
-                errors={fields.cookMinutes.errors}
-                className={cn('w-full')}
-              />
-            </fieldset>
+        <Label htmlFor={fields.cookHours.id}>
+          Cook Time
+        </Label>
+        <fieldset about='Cook Time' className={cn('flex w-full gap-4')}>
+          <Field
+            labelProps={{ children: 'Hours' }}
+            inputProps={{ defaultValue: 0, ...getInputProps(fields.cookHours, { type: 'number' }) }}
+            errors={fields.cookHours.errors}
+            className={cn('w-full')}
+          />
+          <Field
+            labelProps={{ children: 'Minutes' }}
+            inputProps={{ defaultValue: 0, ...getInputProps(fields.cookMinutes, { type: 'number' }) }}
+            errors={fields.cookMinutes.errors}
+            className={cn('w-full')}
+          />
+        </fieldset>
 
-            <Field
-              labelProps={{ children: 'Cook Tempreature (C°)' }}
-              inputProps={{ defaultValue: 0, ...getInputProps(fields.cookTemp, { type: 'number' }) }}
-            />
+        <Field
+          labelProps={{ children: 'Cook Tempreature (C°)' }}
+          inputProps={{ defaultValue: 0, ...getInputProps(fields.cookTemp, { type: 'number' }) }}
+        />
 
-            {/* Difficulty radio button fieldset */}
+        {/* Difficulty radio button fieldset */}
+        <div>
+          <Label htmlFor={fields.difficulty.id}>
+            Difficulty
+          </Label>
+          <RadioGroup
+            className={cn('grid grid-cols-3 gap-4')}
+            defaultValue='medium'
+            name={fields.difficulty.name}
+            id={fields.difficulty.id}
+          >
             <div>
-              <Label htmlFor={fields.difficulty.id}>
-                Difficulty
+              <RadioGroupItem
+                value='easy'
+                id='difficulty-easy'
+                className='peer sr-only'
+                aria-label='Easy'
+              />
+              <Label
+                htmlFor='difficulty-easy'
+                className={cn('flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary')}
+              >
+                Easy
               </Label>
-              <RadioGroup
-                className={cn('grid grid-cols-3 gap-4')}
-                defaultValue='medium'
-                name={fields.difficulty.name}
-                id={fields.difficulty.id}
-              >
-                <div>
-                  <RadioGroupItem
-                    value='easy'
-                    id='difficulty-easy'
-                    className='peer sr-only'
-                    aria-label='Easy'
-                  />
-                  <Label
-                    htmlFor='difficulty-easy'
-                    className={cn('flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary')}
-                  >
-                    Easy
-                  </Label>
-                </div>
-
-                <div>
-                  <RadioGroupItem
-                    value='medium'
-                    id='difficulty-medium'
-                    className='peer sr-only'
-                    aria-label='Medium'
-                  />
-                  <Label
-                    htmlFor='difficulty-medium'
-                    className={cn('flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary')}
-                  >
-                    Medium
-                  </Label>
-                </div>
-
-                <div>
-                  <RadioGroupItem
-                    value='hard'
-                    id='difficulty-hard'
-                    className='peer sr-only'
-                    aria-label='Hard'
-                  />
-                  <Label
-                    htmlFor='difficulty-hard'
-                    className={cn('flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary')}
-                  >
-                    Hard
-                  </Label>
-                </div>
-
-              </RadioGroup>
-              <div className="min-h-[32px] px-4 pb-3 pt-1">
-                {fields.difficulty.errorId ? <ErrorList id={fields.difficulty.errorId} errors={fields.difficulty.errors} /> : null}
-              </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value='ingredients'>
-
-            {/* TODO: should put this combobox into its own file */}
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant='outlineLight'
-                  role='combobox'
-                  aria-expanded={open}
-                  className={cn('w-[400px] justify-between')}
-                >
-                  {comboboxValue ? ingredients.find(ingredient => ingredient.name === comboboxValue)?.name : 'Select Ingredient'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className={cn('w-[400px] p-0')}>
-                <Command>
-                  <CommandInput placeholder='Search ingredient...' />
-                  <CommandList>
-                    <CommandEmpty>No ingredient found.</CommandEmpty>{/* TODO: add logic to create new ingredient on the fly */}
-                    <CommandGroup>
-                      {ingredients.map((ingredient) => (
-                        <CommandItem
-                          key={ingredient.id}
-                          value={ingredient.name}
-                          onSelect={(currentValue) => {
-                            setComboboxValue(currentValue === comboboxValue ? '' : currentValue);
-                            setOpen(false);
-                          }}
-                        >
-                          <Check className={cn('mr-2 h-4 w-4', comboboxValue === ingredient.name ? 'opacity-100' : 'opacity-0')} />
-                          {ingredient.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-
-              <Button
-                variant='outlineLight'
-                role='button'
-                onClick={() => {
-                  // TODO: clear out the combobox value
-                  // TODO: add the ingredient to a new form where you can fill out the unit, measurements, etc. or remove it from the list
-                }}
+            <div>
+              <RadioGroupItem
+                value='medium'
+                id='difficulty-medium'
+                className='peer sr-only'
+                aria-label='Medium'
+              />
+              <Label
+                htmlFor='difficulty-medium'
+                className={cn('flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary')}
               >
-                Add Ingredient
-              </Button>
-            </Popover>
+                Medium
+              </Label>
+            </div>
 
+            <div>
+              <RadioGroupItem
+                value='hard'
+                id='difficulty-hard'
+                className='peer sr-only'
+                aria-label='Hard'
+              />
+              <Label
+                htmlFor='difficulty-hard'
+                className={cn('flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary')}
+              >
+                Hard
+              </Label>
+            </div>
 
-          </TabsContent>
+          </RadioGroup>
+          <div className="min-h-[32px] px-4 pb-3 pt-1">
+            {fields.difficulty.errorId ? <ErrorList id={fields.difficulty.errorId} errors={fields.difficulty.errors} /> : null}
+          </div>
+        </div>
 
-          <TabsContent value='instructions'>
-            <TextareaField
-              labelProps={{ children: 'Instructions' }}
-              textareaProps={{ ...getTextareaProps(fields.instructions), className: cn('min-h-[400px]') }}
-              errors={fields.instructions.errors}
-            />
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant='outlineLight'
+              role='combobox'
+              aria-expanded={open}
+              className={cn('w-[400px] justify-between')}
+            >
+              {comboboxValue ? ingredients.find(ingredient => ingredient.name === comboboxValue?.name)?.name : 'Select Ingredient or Create new'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className={cn('w-[400px] p-0')}>
+            <Command>
+              <CommandInput placeholder='Search ingredient...' ref={ingredientSearchRef} />
+              <CommandList>
+                <CommandEmpty>
+                  <button
+                    className={cn('underline')}
+                    onClick={() => {
+                      addNewIngredientToRecipe(ingredientSearchRef?.current?.value || '');
+                      setOpen(false);
+                    }}
+                  >
+                    Add as new ingredient
+                  </button>
+                </CommandEmpty>{/* TODO: when pressing enter it should add the new ingredient */}
+                <CommandGroup>
+                  {ingredients.map((ingredient) => (
+                    <CommandItem
+                      key={ingredient.id}
+                      value={ingredient.name}
+                      onSelect={(currentValue) => {
+                        if (comboboxValue && comboboxValue.name === currentValue) {
+                          setComboboxValue(undefined);
+                        } else {
+                          const value = ingredients.find(ingredient => ingredient.name === currentValue);
+                          setComboboxValue(value);
+                        }
+                        setOpen(false);
+                      }}
+                    >
+                      <Check className={cn('mr-2 h-4 w-4', comboboxValue && comboboxValue.name === ingredient.name ? 'opacity-100' : 'opacity-0')} />
+                      {ingredient.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
 
-            <Button type='submit' variant='outlineLight' className='mt-4 w-full'>Submit</Button>
-          </TabsContent>
-        </Tabs>
+          <Button
+            variant='outlineLight'
+            role='button'
+            onClick={(e) => {
+              e.preventDefault();
+              if (comboboxValue) {
+                addIngredientToRecipe(comboboxValue);
+              } else {
+                addNewIngredientToRecipe('');
+              }
+            }}
+          >
+            Add Ingredient
+          </Button>
+        </Popover>
+
+        {ingredientFields.map((ingredientField, index) => {
+          const fieldset = ingredientField.getFieldset();
+
+          return (
+            <li key={ingredientField.key} className={cn('my-2')}>
+              <Input {...getFieldsetProps(fieldset.ingredientId)} type='hidden' value={fieldset.ingredientId.initialValue} />
+              <Input {...getFieldsetProps(fieldset.name)} variant='box' variantSize='inline' defaultValue={fieldset.name.initialValue} />
+              <Input {...getFieldsetProps(fieldset.quantity)} variant='box' variantSize='inlineSmall' defaultValue={fieldset.quantity.initialValue} />
+              {/* TODO: if no units are selected, display error border */}
+              <Select {...getFieldsetProps(fieldset.unitId)} defaultValue={fieldset.unitId.initialValue}>
+                <SelectTrigger className={cn('inline-flex w-[100px]')}>
+                  <SelectValue placeholder='Choose a unit' />
+                </SelectTrigger>
+                <SelectContent>
+                  {units.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+                <Button type='button' variant='link' className={cn('min-w-[20px]')} onClick={() => {
+                  form.remove({ name: fields.ingredients.name, index });
+                }}>
+                  <Icon name='cross-1' />
+                </Button>
+              </Select>
+            </li>
+          );
+        })}
+
+        <TextareaField
+          labelProps={{ children: 'Instructions' }}
+          textareaProps={{ ...getTextareaProps(fields.instructions), className: cn('min-h-[400px]') }}
+          errors={fields.instructions.errors}
+        />
+
+        <Button type='submit' variant='outlineLight' className='mt-4 w-full'>Submit</Button>
       </Form>
     </div>
   );
