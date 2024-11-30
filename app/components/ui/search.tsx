@@ -15,8 +15,6 @@ const Search = React.forwardRef<HTMLInputElement, SearchProps>(({ className, ...
           className={cn('pl-10', className)}
           placeholder='Search'
           name='Search'
-          variant='box'
-          colors='whiteFull'
           ref={ref}
           {...props}
         />

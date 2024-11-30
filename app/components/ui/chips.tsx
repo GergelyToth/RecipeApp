@@ -7,9 +7,9 @@ interface ChipsProps {
 }
 
 const Chips = ({ name, active, className, ...props }: ChipsProps) => {
-  const activeClass = active ? 'text-base-black bg-base-tertiary' : 'text-base-white border border-mono-800';
+  const activeClass = active ? 'text-foreground bg-accent' : 'text-foreground border border-accent';
   return (
-    <div className={cn('inline-block px-2.5 py-2 rounded-full font-primary text-xs', activeClass, className)} {...props}>
+    <div className={cn('inline-block px-2.5 py-2 rounded font-primary text-xs', activeClass, className)} {...props}>
       {name}
     </div>
   );

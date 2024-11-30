@@ -7,7 +7,6 @@ import { Icon } from '#app/components/ui/icon.tsx';
 // import { Infobox } from "#app/components/ui/infobox.tsx";
 import { Rate } from '#app/components/ui/rate.tsx';
 
-import { State } from '#app/components/ui/state.tsx';
 import { prisma } from '#app/utils/db.server.ts';
 import { cn } from '#app/utils/misc.tsx';
 
@@ -58,8 +57,8 @@ export default function SingleRecipe() {
         {/* TODO: add navigation to history -1 */}
         <Link to="-1" className={cn('absolute top-5 left-4')}><Icon name="outline/arrow-left" className={cn('w-5 h-5')} /></Link>
 
-        <div className={cn('absolute -top-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-b from-base-black to-transparent')} />
-        <div className='absolute -bottom-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-t from-base-black to-transparent' />
+        <div className={cn('absolute -top-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-b from-black to-transparent')} />
+        <div className='absolute -bottom-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-t from-black to-transparent' />
 
         <img src={imgUrl} alt={recipe.name} className={cn('-z-20 absolute inset-0 w-full h-full object-cover object-center')} />
 
@@ -87,7 +86,7 @@ export default function SingleRecipe() {
       </div>
 
       {/* Page Title */}
-      <h1 className={cn('mt-3 mx-2 px-3 py-2 rounded-lg bg-base-primary  text-base-white text-body-1')}>{recipe.name}</h1>
+      <h1 className={cn('mt-3 mx-2 px-3 py-2 rounded-lg bg-primary  text-white text-body-1')}>{recipe.name}</h1>
 
       {/* Tags */}
       {/* <div className={cn('mt-3 mx-2 px-3 py-1.5 bg-mono-400 rounded-lg flex gap-1 flex-wrap')}>
@@ -99,22 +98,22 @@ export default function SingleRecipe() {
         <div className={cn(currentTab === 'instructions' ? 'rounded-t-lg bg-mono-300 pb-1' : '')}>
           <Button
             onClick={() => setCurrentTab('instructions')}
-            variant={currentTab === 'instructions' ? 'activeTab' : 'outlineSquared'}
+            variant={currentTab === 'instructions' ? 'link' : 'outline'}
           >
-            <State active={currentTab === 'instructions'} name="Instructions" />
+            Instructions
           </Button>
         </div>
         <div className={cn(currentTab === 'ingredients' ? 'rounded-t-lg bg-mono-300 pb-1' : '')}>
           <Button
             onClick={() => setCurrentTab('ingredients')}
-            variant={currentTab === 'ingredients' ? 'activeTab' : 'outlineSquared'}
+            variant={currentTab === 'ingredients' ? 'link' : 'outline'}
           >
-            <State active={currentTab === 'ingredients'} name="Ingredients" />
+            Ingredients
           </Button>
         </div>
       </div>
 
-      <div className={cn('mx-2 rounded-b-lg rounded-tr-lg bg-mono-300 text-base-black py-5 px-5')}>
+      <div className={cn('mx-2 rounded-b-lg rounded-tr-lg bg-mono-300 text-black py-5 px-5')}>
         {currentTab === 'instructions' && (
           <>
             {recipe.instructions}

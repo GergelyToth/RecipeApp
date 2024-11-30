@@ -122,8 +122,8 @@ export default function NewRecipe() {
   };
 
   return (
-    <div>
-      New recipe
+    <div className={cn('max-w-screen-sm mx-auto py-10')}>
+      <h1 className={cn('font-bold text-h1 mb-8')}>New recipe</h1>
 
       <Form
         method='POST'
@@ -131,7 +131,7 @@ export default function NewRecipe() {
       >
         <Field
           labelProps={{ children: 'Name' }}
-          inputProps={{ ...getInputProps(fields.name, { type: 'text' }) }}
+          inputProps={{ ...getInputProps(fields.name, { type: 'text' }), placeholder: 'New recipe name' }}
           errors={fields.name.errors}
         />
 
@@ -189,7 +189,7 @@ export default function NewRecipe() {
             Difficulty
           </Label>
           <RadioGroup
-            className={cn('grid grid-cols-3 gap-4')}
+            className={cn('grid grid-cols-3 gap-4 relative')}
             defaultValue='medium'
             name={fields.difficulty.name}
             id={fields.difficulty.id}
@@ -238,108 +238,132 @@ export default function NewRecipe() {
                 Hard
               </Label>
             </div>
-
           </RadioGroup>
+
           <div className="min-h-[32px] px-4 pb-3 pt-1">
             {fields.difficulty.errorId ? <ErrorList id={fields.difficulty.errorId} errors={fields.difficulty.errors} /> : null}
           </div>
         </div>
 
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant='outlineLight'
-              role='combobox'
-              aria-expanded={open}
-              className={cn('w-[400px] justify-between')}
-            >
-              {comboboxValue ? ingredients.find(ingredient => ingredient.name === comboboxValue?.name)?.name : 'Select Ingredient or Create new'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className={cn('w-[400px] p-0')}>
-            <Command>
-              <CommandInput placeholder='Search ingredient...' ref={ingredientSearchRef} />
-              <CommandList>
-                <CommandEmpty>
-                  <button
-                    className={cn('underline')}
-                    onClick={() => {
-                      addNewIngredientToRecipe(ingredientSearchRef?.current?.value || '');
-                      setOpen(false);
-                    }}
-                  >
-                    Add as new ingredient
-                  </button>
-                </CommandEmpty>{/* TODO: when pressing enter it should add the new ingredient */}
-                <CommandGroup>
-                  {ingredients.map((ingredient) => (
-                    <CommandItem
-                      key={ingredient.id}
-                      value={ingredient.name}
-                      onSelect={(currentValue) => {
-                        if (comboboxValue && comboboxValue.name === currentValue) {
-                          setComboboxValue(undefined);
-                        } else {
-                          const value = ingredients.find(ingredient => ingredient.name === currentValue);
-                          setComboboxValue(value);
-                        }
+        <div className={cn('flex gap-4')}>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant='outline'
+                role='combobox'
+                aria-expanded={open}
+                className={cn('w-full justify-between mb-4')}
+              >
+                {comboboxValue ? ingredients.find(ingredient => ingredient.name === comboboxValue?.name)?.name : 'Select Ingredient or Create new'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className={cn('w-[400px] p-0')}>
+              <Command>
+                <CommandInput placeholder='Search ingredient...' ref={ingredientSearchRef} />
+                <CommandList>
+                  <CommandEmpty>
+                    <button
+                      className={cn('underline')}
+                      onClick={() => {
+                        addNewIngredientToRecipe(ingredientSearchRef?.current?.value || '');
                         setOpen(false);
                       }}
                     >
-                      <Check className={cn('mr-2 h-4 w-4', comboboxValue && comboboxValue.name === ingredient.name ? 'opacity-100' : 'opacity-0')} />
-                      {ingredient.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
+                      Add as new ingredient
+                    </button>
+                  </CommandEmpty>{/* TODO: when pressing enter it should add the new ingredient */}
+                  <CommandGroup>
+                    {ingredients.map((ingredient) => (
+                      <CommandItem
+                        key={ingredient.id}
+                        value={ingredient.name}
+                        onSelect={(currentValue) => {
+                          if (comboboxValue && comboboxValue.name === currentValue) {
+                            setComboboxValue(undefined);
+                          } else {
+                            const value = ingredients.find(ingredient => ingredient.name === currentValue);
+                            setComboboxValue(value);
+                          }
+                          setOpen(false);
+                        }}
+                      >
+                        <Check className={cn('mr-2 h-4 w-4', comboboxValue && comboboxValue.name === ingredient.name ? 'opacity-100' : 'opacity-0')} />
+                        {ingredient.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
 
-          <Button
-            variant='outlineLight'
-            role='button'
-            onClick={(e) => {
-              e.preventDefault();
-              if (comboboxValue) {
-                addIngredientToRecipe(comboboxValue);
-              } else {
-                addNewIngredientToRecipe('');
-              }
-            }}
-          >
-            Add Ingredient
-          </Button>
-        </Popover>
+            <Button
+              variant='outline'
+              role='button'
+              className={cn('shrink-0')}
+              onClick={(e) => {
+                e.preventDefault();
+                if (comboboxValue) {
+                  addIngredientToRecipe(comboboxValue);
+                } else {
+                  addNewIngredientToRecipe('');
+                }
+              }}
+            >
+              Add Ingredient
+            </Button>
+          </Popover>
+        </div>
 
-        {ingredientFields.map((ingredientField, index) => {
-          const fieldset = ingredientField.getFieldset();
+        <ol className={cn('')}>
+          {ingredientFields.length > 0 && (
+            <li className={cn('grid grid-cols-12 gap-4 pl-1')}>
+              <span className={cn('col-span-1')}>#</span>
+              <span className={cn('col-span-5')}>Name</span>
+              <span className={cn('col-span-2')}>Quantity</span>
+              <span className={cn('col-span-2')}>Unit</span>
+              <span className={cn('col-span-2')}>Actions</span>
+            </li>
+          )}
 
-          return (
-            <li key={ingredientField.key} className={cn('my-2')}>
-              <Input {...getFieldsetProps(fieldset.ingredientId)} type='hidden' value={fieldset.ingredientId.initialValue} />
-              <Input {...getFieldsetProps(fieldset.name)} variant='box' variantSize='inline' defaultValue={fieldset.name.initialValue} />
-              <Input {...getFieldsetProps(fieldset.quantity)} variant='box' variantSize='inlineSmall' defaultValue={fieldset.quantity.initialValue} />
-              {/* TODO: if no units are selected, display error border */}
-              <Select {...getFieldsetProps(fieldset.unitId)} defaultValue={fieldset.unitId.initialValue}>
-                <SelectTrigger className={cn('inline-flex w-[100px]')}>
-                  <SelectValue placeholder='Choose a unit' />
-                </SelectTrigger>
-                <SelectContent>
-                  {units.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.id}>
-                      {unit.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-                <Button type='button' variant='link' className={cn('min-w-[20px]')} onClick={() => {
+          {ingredientFields.map((ingredientField, index) => {
+            const fieldset = ingredientField.getFieldset();
+
+            return (
+              <li key={ingredientField.key} className={cn('my-2 grid grid-cols-12 gap-4 pl-1')}>
+                <span className={cn('self-center')}>{index + 1}.</span>
+                <Input {...getFieldsetProps(fieldset.ingredientId)} type='hidden' value={fieldset.ingredientId.initialValue} />
+
+                <Input {...getFieldsetProps(fieldset.name)} defaultValue={fieldset.name.initialValue} className={cn('col-span-5 col-start-2')} placeholder='New ingredient name' />
+                <Input {...getFieldsetProps(fieldset.quantity)} defaultValue={fieldset.quantity.initialValue} className={cn('col-span-2')} />
+
+                {/* TODO: if no units are selected, display error border */}
+                <Select {...getFieldsetProps(fieldset.unitId)} defaultValue={fieldset.unitId.initialValue}>
+                  <SelectTrigger className={cn('inline-flex col-span-2')}>
+                    <SelectValue placeholder='Choose a unit' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {units.map((unit) => (
+                      <SelectItem key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button variant='link' type='button' onClick={() => {
                   form.remove({ name: fields.ingredients.name, index });
                 }}>
-                  <Icon name='cross-1' />
+                  <span aria-hidden>
+                    <Icon name="cross-1" />
+                  </span>{' '}
+                  <span className="sr-only">
+                    Remove ingredient {index + 1}
+                  </span>
                 </Button>
-              </Select>
-            </li>
-          );
-        })}
+              </li>
+            );
+          })}
+        </ol>
 
         <TextareaField
           labelProps={{ children: 'Instructions' }}
@@ -347,7 +371,7 @@ export default function NewRecipe() {
           errors={fields.instructions.errors}
         />
 
-        <Button type='submit' variant='outlineLight' className='mt-4 w-full'>Submit</Button>
+        <Button type='submit' variant='outline' className='mt-4 w-full'>Submit</Button>
       </Form>
     </div>
   );

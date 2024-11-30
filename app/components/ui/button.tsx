@@ -5,34 +5,23 @@ import * as React from 'react';
 import { cn } from '#app/utils/misc.tsx';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-full text-button leading-none  ring-offset-background transition-colors outline-none focus-visible:ring-2 focus-within:ring-2 ring-ring ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors outline-none focus-visible:ring-2 focus-within:ring-2 ring-ring ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-base-black text-primary-foreground hover:bg-primary/80',
-        outline:
-					'border border-mono-800 text-mono-800 hover:text-mono-900 hover:border-mono-900',
-        outlineLight:
-					'border border-mono-600 text-mono-600 hover:text-mono-700 hover:border-mono-700',
-        withIcon: 'bg-base-white text-mono-600 text-left inline-flex justify-between gap-x-4 hover:text-mono-700',
+        default: 'bg-primary text-primary-foreground hover:bg-primary/80',
         destructive:
-					'bg-state-error text-base-white', // TODO: do some hover magic for error button
-
-        outlineSquared:
-					'border border-mono-600 text-mono-600 hover:text-mono-700 hover:border-mono-700 rounded-lg',
-        activeTab: 'text-bold rounded-t-lg rounded-b-none bg-mono-300',
-
-        // TODO: delete everything below here
+					'bg-destructive text-destructive-foreground hover:bg-destructive/80',
+        outline:
+					'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         secondary:
 					'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'min-w-32 h-10 px-4 py-2.5',
-        wide: 'min-w-80 h-10 px-4 py-2.5',
-
-        // TODO: delete everything below here
+        default: 'h-10 px-4 py-2',
+        wide: 'px-24 py-5',
         sm: 'h-9 rounded-md px-3',
         lg: 'h-11 rounded-md px-8',
         pill: 'px-12 py-3 leading-3',
