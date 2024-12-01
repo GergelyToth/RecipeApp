@@ -371,7 +371,7 @@ export default function NewRecipe() {
           errors={fields.instructions.errors}
         />
 
-        <Button type='submit' variant='outline' className='mt-4 w-full'>Submit</Button>
+        <Button type='submit' variant='default' className='mt-4 w-full'>Submit</Button>
       </Form>
     </div>
   );

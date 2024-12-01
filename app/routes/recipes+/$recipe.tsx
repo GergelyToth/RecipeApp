@@ -1,12 +1,14 @@
 import { invariantResponse } from '@epic-web/invariant';
 import { json, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { type FC, useState } from 'react';
-import { Button } from '#app/components/ui/button.tsx';
+import { type FC } from 'react';
+import { Avatar, AvatarFallback } from '#app/components/ui/avatar.tsx';
+import { Badge } from '#app/components/ui/badge.tsx';
 import { Icon } from '#app/components/ui/icon.tsx';
-// import { Infobox } from "#app/components/ui/infobox.tsx";
 import { Rate } from '#app/components/ui/rate.tsx';
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '#app/components/ui/tabs.tsx';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '#app/components/ui/tooltip.tsx';
 import { prisma } from '#app/utils/db.server.ts';
 import { cn } from '#app/utils/misc.tsx';
 
@@ -30,6 +32,11 @@ export async function loader({ params }: LoaderFunctionArgs) {
         },
       },
       instructions: true,
+      cookTime: true,
+      prepTime: true,
+      cookTemp: true,
+      difficulty: true,
+      servings: true,
     },
     where: {
       id: params.recipe,
@@ -41,21 +48,37 @@ export async function loader({ params }: LoaderFunctionArgs) {
   return json({ recipe });
 }
 
+function displayMinuteBasedTime(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  return `${hours ? hours + 'h' : ''} ${mins ? mins + 'm' : ''}`.trim();
+}
+
 export default function SingleRecipe() {
   const data = useLoaderData<typeof loader>();
   const { recipe } = data;
 
-  const [currentTab, setCurrentTab] = useState<'instructions' | 'ingredients'>('instructions');
-
   const imgUrl = 'https://picsum.photos/500/500'; // TODO: get img from db
   const rating = recipe.ratings.reduce((sum, current) => sum += current.rating, 0) / recipe.ratings.length;
-  // source
+
+  const badges = [];
+  badges.push(recipe.difficulty);
+  if (recipe.prepTime) {
+    badges.push(`Prep time: ${displayMinuteBasedTime(recipe.prepTime)}`);
+  }
+  if (recipe.cookTime) {
+    badges.push(`Cook time: ${displayMinuteBasedTime(recipe.cookTime)}`);
+  }
+  if (recipe.cookTemp) {
+    badges.push(`Cook temp: ${recipe.cookTemp}C°`);
+  }
 
   return (
     <div>
       <header className={cn('h-64 relative flex overflow-hidden rounded-b-xl')}>
         {/* TODO: add navigation to history -1 */}
-        <Link to="-1" className={cn('absolute top-5 left-4')}><Icon name="outline/arrow-left" className={cn('w-5 h-5')} /></Link>
+        <Link to='/recipes/' className={cn('absolute top-5 left-4')}><Icon name="outline/arrow-left" className={cn('w-5 h-5')} /></Link>
 
         <div className={cn('absolute -top-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-b from-black to-transparent')} />
         <div className='absolute -bottom-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-t from-black to-transparent' />
@@ -74,53 +97,44 @@ export default function SingleRecipe() {
         </div>
       </header>
 
-      {/* Source */}
-      <div className={cn('flex flex-row gap-1 mt-3')}>
-        <div className={cn('flex flex-shrink-0 bg-mono-800 rounded-r-full w-16 justify-end')}>
-          {/* TODO: change to question mark */}
-          <Icon name={recipe.source?.icon || 'outline/sun'} className={cn('w-12 h-12 rounded-full')} />
-        </div>
-        <div className={cn('flex place-items-center px-5 font-bold flex-grow bg-mono-800 rounded-l-full')}>
-          {recipe.source?.name || ''}
-        </div>
-      </div>
+      <div className={cn('max-w-screen-md px-6 mx-auto')}>
+        {/* Source */}
+        <div className={cn('flex gap-4 items-center mt-6')}>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Avatar>
+                  {/* TODO: add source image? */}
+                  <AvatarFallback>{recipe.source?.name?.substring(0, 1)}</AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent>
+                {recipe.source?.name}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-      {/* Page Title */}
-      <h1 className={cn('mt-3 mx-2 px-3 py-2 rounded-lg bg-primary  text-white text-body-1')}>{recipe.name}</h1>
-
-      {/* Tags */}
-      {/* <div className={cn('mt-3 mx-2 px-3 py-1.5 bg-mono-400 rounded-lg flex gap-1 flex-wrap')}>
-        {tags.map((tag, index) => <Infobox key={`${tag.name}-${index}`} iconName={tag.iconName} info={tag.name} />)}
-      </div> */}
-
-      {/* Tabs */}
-      <div className={cn('mt-3 mx-2 flex gap-1')}>
-        <div className={cn(currentTab === 'instructions' ? 'rounded-t-lg bg-mono-300 pb-1' : '')}>
-          <Button
-            onClick={() => setCurrentTab('instructions')}
-            variant={currentTab === 'instructions' ? 'link' : 'outline'}
-          >
-            Instructions
-          </Button>
+          <h1 className={cn('text-h5')}>{recipe.name}</h1>
         </div>
-        <div className={cn(currentTab === 'ingredients' ? 'rounded-t-lg bg-mono-300 pb-1' : '')}>
-          <Button
-            onClick={() => setCurrentTab('ingredients')}
-            variant={currentTab === 'ingredients' ? 'link' : 'outline'}
-          >
-            Ingredients
-          </Button>
-        </div>
-      </div>
 
-      <div className={cn('mx-2 rounded-b-lg rounded-tr-lg bg-mono-300 text-black py-5 px-5')}>
-        {currentTab === 'instructions' && (
-          <>
-            {recipe.instructions}
-          </>
-        )}
-        {currentTab === 'ingredients' && (
-          <>
+        <div className={cn('mt-4 flex gap-2 flex-wrap')}>
+          {badges.map((badge, index) => (
+            <Badge key={`badge-${index}`} variant='secondary'>{badge}</Badge>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <Tabs className={cn('mt-6')} defaultValue='instructions'>
+          <TabsList className={cn('min-w-64 ')}>
+            <TabsTrigger value='instructions' className={cn('grow')}>Instructions</TabsTrigger>
+            <TabsTrigger value='ingredients' className={cn('grow')}>Ingredients</TabsTrigger>
+          </TabsList>
+          <TabsContent value='instructions' className={cn('px-2 pt-2')}>
+            {/* TODO: format! */}
+            <p className={cn('whitespace-break-spaces text-sm md:text-md')}>{recipe.instructions}</p>
+          </TabsContent>
+
+          <TabsContent value='ingredients' className={cn('px-2 pt-2')}>
             <ul>
               {recipe.ingredients.map((ingredient => (
                 <Ingredient
@@ -131,15 +145,15 @@ export default function SingleRecipe() {
                 />
               )))}
             </ul>
-          </>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 }
 
 const Ingredient: FC<{ quantity: number, unit: string, name: string }> = ({ quantity, unit, name }) => (
-  <li>
-    {quantity}{unit} - {name}
+  <li className={cn('text-sm md:text-md mb-1')}>
+    {quantity}{unit} - <span className={cn('text-blue-500')}>{name}</span>
   </li>
 );
