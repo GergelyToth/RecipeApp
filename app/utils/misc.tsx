@@ -13,6 +13,11 @@ export function getNoteImgSrc(imageId: string) {
   return `/resources/note-images/${imageId}`;
 }
 
+export function getRecipeImgSrc(imageId: string) {
+  if (!imageId) return undefined;
+  return `/resources/recipe-images/${imageId}`;
+}
+
 export function getErrorMessage(error: unknown) {
   if (typeof error === 'string') return error;
   if (

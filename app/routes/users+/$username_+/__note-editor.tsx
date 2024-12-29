@@ -94,6 +94,7 @@ export function NoteEditor({
 				*/}
           <button type="submit" className="hidden" />
           {note ? <input type="hidden" name="id" value={note.id} /> : null}
+
           <div className="flex flex-col gap-1">
             <Field
               labelProps={{ children: 'Title' }}
@@ -110,6 +111,7 @@ export function NoteEditor({
               }}
               errors={fields.content.errors}
             />
+
             <div>
               <Label>Images</Label>
               <ul className="flex flex-col gap-4">
@@ -140,6 +142,7 @@ export function NoteEditor({
                 })}
               </ul>
             </div>
+
             <Button
               className="mt-3"
               {...form.insert.getButtonProps({ name: fields.images.name })}
@@ -150,8 +153,10 @@ export function NoteEditor({
               <span className="sr-only">Add image</span>
             </Button>
           </div>
+
           <ErrorList id={form.errorId} errors={form.errors} />
         </Form>
+
         <div className={floatingToolbarClassName}>
           <Button variant="destructive" {...form.reset.getButtonProps()}>
             Reset

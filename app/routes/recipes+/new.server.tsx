@@ -1,22 +1,75 @@
 import { parseWithZod } from '@conform-to/zod';
+// import { createId as cuid } from '@paralleldrive/cuid2';
 import { type Prisma } from '@prisma/client';
 import {
   type ActionFunctionArgs,
   json,
   redirect,
+  unstable_createMemoryUploadHandler as createMemoryUploadHandler,
+  unstable_parseMultipartFormData as parseMultipartFormData,
 } from '@remix-run/node';
 import { prisma } from '#app/utils/db.server.ts';
-import { RecipeNewSchema } from './new.tsx';
+import { 
+  RecipeNewSchema,
+  MAX_UPLOAD_SIZE,
+  type ImageFieldset,
+} from './new.tsx';
 
+// TODO: should this move to the helper file?
 function convertTimeToMinutes(hours: number, minutes: number) {
   return (hours * 60) + minutes;
 }
 
+function imageHasFile(image: ImageFieldset): image is ImageFieldset & { file: NonNullable<ImageFieldset['file']> } {
+  return Boolean(image.file?.size && image.file?.size > 0);
+}
+
+function imageHasId(image: ImageFieldset): image is ImageFieldset & { id: NonNullable<ImageFieldset['id']> } {
+  return image.id != null;
+}
+
 export async function action({ request }: ActionFunctionArgs) {
-  console.log('asdf');
-  const formData = await request.formData();
-  const submission = parseWithZod(formData, {
-    schema: RecipeNewSchema,
+  const formData = await parseMultipartFormData(
+    request,
+    createMemoryUploadHandler({ maxPartSize: MAX_UPLOAD_SIZE }),
+  );
+
+  const submission = await parseWithZod(formData, {
+    schema: RecipeNewSchema.transform(async ({ image = [], ...data }) => {
+      return {
+        ...data,
+        imageUpdates: await Promise.all(
+          image.filter(imageHasId).map(async (i) => {
+            if (imageHasFile(i)) {
+              return {
+                id: i.id,
+                altText: i.altText,
+                contentType: i.file.type,
+                blob: Buffer.from(await i.file.arrayBuffer()),
+              };
+            } else {
+              return {
+                id: i.id,
+                altText: i.altText,
+              };
+            }
+          }),
+        ),
+        newImages: await Promise.all(
+          image
+            .filter(imageHasFile)
+            .filter((i) => !i.id)
+            .map(async (i) => {
+              return {
+                altText: i.altText,
+                contentType: i.file.type,
+                blob: Buffer.from(await i.file.arrayBuffer()),
+              };
+            }),
+        ),
+      };
+    }),
+    async: true,
   });
 
   if (submission.status !== 'success') {
@@ -37,6 +90,8 @@ export async function action({ request }: ActionFunctionArgs) {
     prepMinutes,
     difficulty,
     ingredients,
+    // imageUpdates = [],
+    newImages = [],
   } = submission.value;
 
   // process the ingredients. If there is one without an ingredientId, we should create it first, so we can link it to this recipe correctly
@@ -76,11 +131,20 @@ export async function action({ request }: ActionFunctionArgs) {
     difficulty,
     prepTime: convertTimeToMinutes(prepHours, prepMinutes),
     servings,
+    image: {
+      // TODO: we should be able to delete or update the image
+      // delete: { id: { notIn: imageUpdates.map((i) => i.id) } },
+      // update: imageUpdates.map((updates) => ({
+      //   where: { id: updates.id },
+      //   data: { ...updates, id: updates.blob ? cuid() : updates.id },
+      // })),
+      create: newImages,
+    },
   };
 
   const createdRecipe = await prisma.recipe.create({
     data: { ...newRecipe },
   });
 
-  return redirect(`/recipe/${createdRecipe.id}`);
+  return redirect(`/recipes/${createdRecipe.id}`);
 }

@@ -10,7 +10,7 @@ import { Rate } from '#app/components/ui/rate.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#app/components/ui/tabs.tsx';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '#app/components/ui/tooltip.tsx';
 import { prisma } from '#app/utils/db.server.ts';
-import { cn } from '#app/utils/misc.tsx';
+import { cn, getRecipeImgSrc } from '#app/utils/misc.tsx';
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [{
   title: `Recipe - ${data?.recipe.name}`,
@@ -37,6 +37,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
       cookTemp: true,
       difficulty: true,
       servings: true,
+      image: {
+        select: {
+          id: true,
+          altText: true,
+        },
+      },
     },
     where: {
       id: params.recipe,
@@ -59,7 +65,8 @@ export default function SingleRecipe() {
   const data = useLoaderData<typeof loader>();
   const { recipe } = data;
 
-  const imgUrl = 'https://picsum.photos/500/500'; // TODO: get img from db
+  const hasImage = recipe.image.length > 0 && recipe.image[0] && recipe.image[0].id;
+  const imgUrl = hasImage ? getRecipeImgSrc((recipe.image as any)[0].id) : ''; // TODO: if no image display default
   const rating = recipe.ratings.reduce((sum, current) => sum += current.rating, 0) / recipe.ratings.length;
 
   const badges = [];
