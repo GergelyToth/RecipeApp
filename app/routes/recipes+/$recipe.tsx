@@ -90,7 +90,11 @@ export default function SingleRecipe() {
         <div className={cn('absolute -top-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-b from-black to-transparent')} />
         <div className='absolute -bottom-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-t from-black to-transparent' />
 
-        <img src={imgUrl} alt={recipe.name} className={cn('-z-20 absolute inset-0 w-full h-full object-cover object-center')} />
+        {imgUrl && imgUrl.length > 0 ? (
+          <img src={imgUrl} alt={recipe.name} className={cn('-z-20 absolute inset-0 w-full h-full object-cover object-center')} />
+        ) : (
+          <span className={cn('absolute top-2.5 left-1/2 -translate-x-1/2 text-[200px] leading-none block text-center grayscale')}>🍽️</span>
+        )}
 
         <div className={cn('flex justify-between flex-row self-end w-full px-4 py-3')}>
           <Rate rating={rating} />

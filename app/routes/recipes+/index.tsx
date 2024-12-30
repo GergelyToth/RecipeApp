@@ -31,33 +31,43 @@ export default function Recipes() {
 
   return (
     <div>
-      Recipes
+      <h1>Recipes</h1>
 
       {recipes.length > 0 && (
         <div className={cn('flex flex-wrap max-w-full gap-8')}>
-          {recipes.map((recipe) => (
-            <Link
-              key={recipe.id}
-              to={`/recipes/${recipe.id}`}
-              className={cn('underline shrink-0')}
-            >
-              <Card>
-                <CardHeader>
-                  <div className={cn('w-[200px] h-[150px] relative')}>
-                    <img 
-                      className={cn('absolute inset-0 w-full h-full object-cover')}
-                      src={getRecipeImgSrc(recipe.image[0]?.id) || 'https://picsum.photos/200/200'} 
-                      alt={recipe.name} 
-                    />
-                  </div>
-                </CardHeader>
+          {recipes.map((recipe) => {
+            const hasImage = recipe.image.length > 0 && recipe.image[0] && recipe.image[0].id;
 
-                <CardContent>
-                  {recipe.name}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+            return (
+              <Link
+                key={recipe.id}
+                to={`/recipes/${recipe.id}`}
+                className={cn('shrink-0')}
+              >
+                <Card>
+                  <CardHeader>
+                    <div className={cn('w-[200px] h-[150px] relative')}>
+                      {hasImage && (
+                        <img
+                          className={cn('absolute inset-0 w-full h-full object-cover')}
+                          src={getRecipeImgSrc(recipe.image[0]!.id)}
+                          alt={recipe.name}
+                        />
+                      )}
+
+                      {!hasImage && (
+                        <span className={cn('text-[120px] leading-none block text-center')}>🍽️</span>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent>
+                    {recipe.name}
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -169,7 +169,7 @@ export default function NewRecipe() {
               return (
                 <li
                   key={image.key}
-                  className="relative border-b-2 border-muted-foreground"
+                  className={cn('relative')}
                 >
                   <button
                     className="absolute right-0 top-0 text-foreground-destructive"
@@ -185,21 +185,25 @@ export default function NewRecipe() {
                       Remove image {index + 1}
                     </span>
                   </button>
+
                   <ImageChooser meta={image} />
                 </li>
               );
             })}
           </ul>
         </div>
-        <Button
-          className="mt-3"
-          {...form.insert.getButtonProps({ name: fields.image.name })}
-        >
-          <span aria-hidden>
-            <Icon name="plus">Image</Icon>
-          </span>{' '}
-          <span className="sr-only">Add image</span>
-        </Button>
+
+        {imageList.length < 1 && (
+          <Button
+            className="mt-2 mb-8"
+            {...form.insert.getButtonProps({ name: fields.image.name })}
+          >
+            <span aria-hidden>
+              <Icon name="plus">Image</Icon>
+            </span>{' '}
+            <span className="sr-only">Add image</span>
+          </Button>
+        )}
 
         <Field
           labelProps={{ children: 'Servings' }}
@@ -380,7 +384,7 @@ export default function NewRecipe() {
           </Popover>
         </div>
 
-        <ol className={cn('')}>
+        <ol>
           {ingredientFields.length > 0 && (
             <li className={cn('grid grid-cols-12 gap-4 pl-1')}>
               <span className={cn('col-span-1')}>#</span>
@@ -431,6 +435,7 @@ export default function NewRecipe() {
           })}
         </ol>
 
+        {/* TODO: add markdown parsing */}  
         <TextareaField
           labelProps={{ children: 'Instructions' }}
           textareaProps={{ ...getTextareaProps(fields.instructions), className: cn('min-h-[400px]') }}
@@ -525,9 +530,11 @@ function ImageChooser({ meta }: { meta: FieldMetadata<ImageFieldset> }) {
           </div>
         </div>
       </div>
-      <div className="min-h-[32px] px-4 pb-3 pt-1">
-        <ErrorList id={meta.errorId} errors={meta.errors} />
-      </div>
+      {meta.errors && meta.errors.length > 0 && (
+        <div className="min-h-[32px] px-4 pb-3 pt-1">
+          <ErrorList id={meta.errorId} errors={meta.errors} />
+        </div>
+      )}
     </fieldset>
   );
 }
