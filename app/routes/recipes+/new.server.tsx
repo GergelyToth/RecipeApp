@@ -13,7 +13,7 @@ import {
   RecipeNewSchema,
   MAX_UPLOAD_SIZE,
   type ImageFieldset,
-} from './new.tsx';
+} from './__recipe-editor.tsx';
 
 // TODO: should this move to the helper file?
 function convertTimeToMinutes(hours: number, minutes: number) {
