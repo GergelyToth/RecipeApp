@@ -1,6 +1,6 @@
 import { json, useLoaderData, type MetaFunction } from '@remix-run/react';
-import { RecipeEditor } from './__recipe-editor.tsx'
 import { prisma } from '#app/utils/db.server.ts';
+import { RecipeEditor } from './__recipe-editor.tsx';
 
 export { action } from './new.server.tsx';
 
@@ -49,7 +49,7 @@ export default function NewRecipe() {
   const { ingredients, units } = useLoaderData<typeof loader>();
 
   return (
-    <RecipeEditor 
+    <RecipeEditor
       ingredients={ingredients}
       units={units}
     />

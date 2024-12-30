@@ -1,4 +1,4 @@
-import { 
+import {
   getFieldsetProps,
   getFormProps,
   getInputProps,
@@ -7,7 +7,7 @@ import {
   type FieldMetadata,
 } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
-import { Form, json, type MetaFunction } from '@remix-run/react';
+import { Form } from '@remix-run/react';
 import { Check } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
@@ -420,7 +420,7 @@ export function RecipeEditor({
           })}
         </ol>
 
-        {/* TODO: add markdown parsing */}  
+        {/* TODO: add markdown parsing */}
         <TextareaField
           labelProps={{ children: 'Instructions' }}
           textareaProps={{ ...getTextareaProps(fields.instructions), className: cn('min-h-[400px]') }}
