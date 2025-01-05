@@ -186,7 +186,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const updatedRecipe = await prisma.recipe.upsert({
     select: { id: true },
-    where: { id: recipeId },
+    where: { id: recipeId ?? '__new_recipe__' },
     create: { ...newRecipe },
     update: { ...updateRecipe },
   });

@@ -88,8 +88,8 @@ export function RecipeEditor({
   const [open, setOpen] = useState(false);
   const [comboboxValue, setComboboxValue] = useState<Ingredient>(); // TODO: is this even correct?
   const ingredientSearchRef = useRef<HTMLInputElement>(null);
-  const [prepHours, prepMinutes] = convertMinutesToTime(recipe.prepTime);
-  const [cookHours, cookMinutes] = convertMinutesToTime(recipe.cookTime);
+  const [prepHours, prepMinutes] = convertMinutesToTime(recipe?.prepTime || 0);
+  const [cookHours, cookMinutes] = convertMinutesToTime(recipe?.cookTime || 0);
 
   const [form, fields] = useForm({
     id: 'recipe-editor',
@@ -98,7 +98,7 @@ export function RecipeEditor({
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: RecipeNewSchema });
     },
-    defaultValue: {
+    defaultValue: recipe && {
       ...recipe,
       prepHours,
       prepMinutes,
@@ -144,7 +144,7 @@ export function RecipeEditor({
   return (
     <div className={cn('max-w-screen-sm mx-auto py-10')}>
       <h1 className={cn('font-bold text-h1 mb-8')}>
-        {recipe.name ? `Editing: ${recipe.name}` : 'New Recipe'}
+        {recipe?.name ? `Editing: ${recipe.name}` : 'New Recipe'}
       </h1>
 
       <Form
@@ -259,7 +259,7 @@ export function RecipeEditor({
           </Label>
           <RadioGroup
             className={cn('grid grid-cols-3 gap-4 relative')}
-            defaultValue={recipe.difficulty || 'medium'}
+            defaultValue={recipe?.difficulty || 'medium'}
             name={fields.difficulty.name}
             id={fields.difficulty.id}
           >

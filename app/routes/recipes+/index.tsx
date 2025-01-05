@@ -42,7 +42,7 @@ export default function Recipes() {
               <Link
                 key={recipe.id}
                 to={`/recipes/${recipe.id}`}
-                className={cn('shrink-0')}
+                className={cn('shrink-0 grow-0 text-wrap w-[250px]')}
               >
                 <Card>
                   <CardHeader>
