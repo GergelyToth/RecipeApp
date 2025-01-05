@@ -2,6 +2,7 @@ import { invariantResponse } from '@epic-web/invariant';
 import { json } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import React from 'react';
+import { Button } from '#app/components/ui/button.tsx';
 import { Card, CardHeader, CardContent } from '#app/components/ui/card';
 import { prisma } from '#app/utils/db.server.ts';
 import { cn, getRecipeImgSrc } from '#app/utils/misc.tsx';
@@ -31,7 +32,11 @@ export default function Recipes() {
 
   return (
     <div>
-      <h1>Recipes</h1>
+      <h1 className={cn('text-h1')}>Recipes</h1>
+
+      <Button className={cn('my-4')}>
+        <Link to="/recipes/new">Create Recipe</Link>
+      </Button>
 
       {recipes.length > 0 && (
         <div className={cn('flex flex-wrap max-w-full gap-8')}>
