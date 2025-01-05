@@ -85,7 +85,9 @@ export default function SingleRecipe() {
     <div>
       <header className={cn('h-64 relative flex overflow-hidden rounded-b-xl')}>
         {/* TODO: add navigation to history -1 */}
-        <Link to='/recipes/' className={cn('absolute top-5 left-4')}><Icon name="outline/arrow-left" className={cn('w-5 h-5')} /></Link>
+        <Link to='/recipes/' className={cn('absolute top-5 left-4')}>
+          <Icon name="outline/arrow-left" className={cn('w-5 h-5')} />
+        </Link>
 
         <div className={cn('absolute -top-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-b from-black to-transparent')} />
         <div className='absolute -bottom-2 left-0 -z-10 w-full h-1/2 bg-gradient-to-t from-black to-transparent' />
@@ -101,9 +103,12 @@ export default function SingleRecipe() {
 
           {/* TODO: Links */}
           <div className={cn('flex flex-row justify-evenly gap-2')}>
+            {/*
             <Icon name="outline/archive" className={cn('w-5 h-5')} />
             <Icon name="outline/star" className={cn('w-5 h-5')} />
             <Icon name="outline/gallery-export" className={cn('w-5 h-5')} />
+            */}
+            <Link to={`/recipes/${recipe.id}/edit`}>Edit</Link>
           </div>
         </div>
       </header>

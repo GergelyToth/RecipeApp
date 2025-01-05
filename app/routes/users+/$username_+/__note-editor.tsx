@@ -55,9 +55,9 @@ export function NoteEditor({
   note,
 }: {
   note?: SerializeFrom<
-		Pick<Note, 'id' | 'title' | 'content'> & {
-		  images: Array<Pick<NoteImage, 'id' | 'altText'>>
-		}
+    Pick<Note, 'id' | 'title' | 'content'> & {
+      images: Array<Pick<NoteImage, 'id' | 'altText'>>
+    }
   >
 }) {
   const actionData = useActionData<typeof action>();
@@ -88,10 +88,10 @@ export function NoteEditor({
           encType="multipart/form-data"
         >
           {/*
-					This hidden submit button is here to ensure that when the user hits
-					"enter" on an input field, the primary form function is submitted
-					rather than the first button in the form (which is delete/add image).
-				*/}
+            This hidden submit button is here to ensure that when the user hits
+            "enter" on an input field, the primary form function is submitted
+            rather than the first button in the form (which is delete/add image).
+          */}
           <button type="submit" className="hidden" />
           {note ? <input type="hidden" name="id" value={note.id} /> : null}
 
@@ -192,7 +192,7 @@ function ImageChooser({ meta }: { meta: FieldMetadata<ImageFieldset> }) {
               htmlFor={fields.file.id}
               className={cn('group absolute h-32 w-32 rounded-lg', {
                 'bg-accent opacity-40 focus-within:opacity-100 hover:opacity-100':
-									!previewImage,
+                  !previewImage,
                 'cursor-pointer focus-within:ring-2': !existingImage,
               })}
             >

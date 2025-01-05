@@ -7,6 +7,7 @@ import {
   type FieldMetadata,
 } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
+import { type Recipe, type Unit, type Ingredient } from '@prisma/client';
 import { Form } from '@remix-run/react';
 import { Check } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -34,20 +35,9 @@ import {
   SelectValue,
 } from '#app/components/ui/select.tsx';
 import { Textarea } from '#app/components/ui/textarea.tsx';
-import { cn, getRecipeImgSrc } from '#app/utils/misc.tsx';
+import { cn, getRecipeImgSrc, convertMinutesToTime } from '#app/utils/misc.tsx';
 
 export const MAX_UPLOAD_SIZE = 1024 * 1024 * 3; // 3MB
-
-export interface Unit {
-  id: string;
-  name: string;
-}
-
-export interface Ingredient {
-  id: string;
-  name: string;
-  defaultUnit: Unit;
-}
 
 const ImageFieldsetSchema = z.object({
   id: z.string().optional(),
@@ -63,6 +53,7 @@ const ImageFieldsetSchema = z.object({
 export type ImageFieldset = z.infer<typeof ImageFieldsetSchema>;
 
 export const RecipeNewSchema = z.object({
+  id: z.string().optional(),
   name: z.string(),
   instructions: z.string(),
   servings: z.number().int().min(0).default(0),
@@ -78,6 +69,7 @@ export const RecipeNewSchema = z.object({
       name: z.string(),
       quantity: z.number(),
       unitId: z.string(),
+      recipeId: z.string().optional(),
     }),
   ),
   image: z.array(ImageFieldsetSchema).max(1).optional(), // TODO: for now have only 1 image per recipe
@@ -87,13 +79,17 @@ export const RecipeNewSchema = z.object({
 export function RecipeEditor({
   ingredients,
   units,
+  recipe,
 }: {
   ingredients: Ingredient[],
   units: Unit[],
+  recipe: Recipe,
 }) {
   const [open, setOpen] = useState(false);
   const [comboboxValue, setComboboxValue] = useState<Ingredient>(); // TODO: is this even correct?
   const ingredientSearchRef = useRef<HTMLInputElement>(null);
+  const [prepHours, prepMinutes] = convertMinutesToTime(recipe.prepTime);
+  const [cookHours, cookMinutes] = convertMinutesToTime(recipe.cookTime);
 
   const [form, fields] = useForm({
     id: 'recipe-editor',
@@ -101,6 +97,20 @@ export function RecipeEditor({
     shouldValidate: 'onBlur',
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: RecipeNewSchema });
+    },
+    defaultValue: {
+      ...recipe,
+      prepHours,
+      prepMinutes,
+      cookHours,
+      cookMinutes,
+      ingredients: recipe.ingredients.map((i) => ({
+        recipeId: i.recipeId,
+        ingredientId: i.ingredient.id,
+        name: i.ingredient.name,
+        unitId: i.unitId,
+        quantity: i.quantity,
+      })),
     },
   });
   const ingredientFields = fields.ingredients.getFieldList();
@@ -133,13 +143,17 @@ export function RecipeEditor({
 
   return (
     <div className={cn('max-w-screen-sm mx-auto py-10')}>
-      <h1 className={cn('font-bold text-h1 mb-8')}>New recipe</h1>
+      <h1 className={cn('font-bold text-h1 mb-8')}>
+        {recipe.name ? `Editing: ${recipe.name}` : 'New Recipe'}
+      </h1>
 
       <Form
         method='POST'
         {...getFormProps(form)}
         encType='multipart/form-data'
       >
+        {recipe ? <Input {...getFieldsetProps(fields.id)} type='hidden' value={fields.id.initialValue} /> : null}
+
         <Field
           labelProps={{ children: 'Name' }}
           inputProps={{ ...getInputProps(fields.name, { type: 'text' }), placeholder: 'New recipe name' }}
@@ -245,7 +259,7 @@ export function RecipeEditor({
           </Label>
           <RadioGroup
             className={cn('grid grid-cols-3 gap-4 relative')}
-            defaultValue='medium'
+            defaultValue={recipe.difficulty || 'medium'}
             name={fields.difficulty.name}
             id={fields.difficulty.id}
           >
@@ -386,6 +400,7 @@ export function RecipeEditor({
             return (
               <li key={ingredientField.key} className={cn('my-2 grid grid-cols-12 gap-4 pl-1')}>
                 <span className={cn('self-center')}>{index + 1}.</span>
+                <Input {...getFieldsetProps(fieldset.recipeId)} type='hidden' value={fieldset.recipeId.initialValue} />
                 <Input {...getFieldsetProps(fieldset.ingredientId)} type='hidden' value={fieldset.ingredientId.initialValue} />
 
                 <Input {...getFieldsetProps(fieldset.name)} defaultValue={fieldset.name.initialValue} className={cn('col-span-5 col-start-2')} placeholder='New ingredient name' />
@@ -451,7 +466,7 @@ function ImageChooser({ meta }: { meta: FieldMetadata<ImageFieldset> }) {
               htmlFor={fields.file.id}
               className={cn('group absolute h-32 w-32 rounded-lg', {
                 'bg-accent opacity-40 focus-within:opacity-100 hover:opacity-100':
-									!previewImage,
+                  !previewImage,
                 'cursor-pointer focus-within:ring-2': !existingImage,
               })}
             >

@@ -22,9 +22,9 @@ export function getErrorMessage(error: unknown) {
   if (typeof error === 'string') return error;
   if (
     error &&
-		typeof error === 'object' &&
-		'message' in error &&
-		typeof error.message === 'string'
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
   ) {
     return error.message;
   }
@@ -69,9 +69,9 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getDomainUrl(request: Request) {
   const host =
-		request.headers.get('X-Forwarded-Host') ??
-		request.headers.get('host') ??
-		new URL(request.url).host;
+    request.headers.get('X-Forwarded-Host') ??
+    request.headers.get('host') ??
+    new URL(request.url).host;
   const protocol = request.headers.get('X-Forwarded-Proto') ?? 'http';
   return `${protocol}://${host}`;
 }
@@ -80,9 +80,9 @@ export function getReferrerRoute(request: Request) {
   // spelling errors and whatever makes this annoyingly inconsistent
   // in my own testing, `referer` returned the right value, but 🤷‍♂️
   const referrer =
-		request.headers.get('referer') ??
-		request.headers.get('referrer') ??
-		request.referrer;
+    request.headers.get('referer') ??
+    request.headers.get('referrer') ??
+    request.referrer;
   const domain = getDomainUrl(request);
   if (referrer?.startsWith(domain)) {
     return referrer.slice(domain.length);
@@ -161,13 +161,13 @@ export function useIsPending({
   const contextualFormAction = useFormAction();
   const navigation = useNavigation();
   const isPendingState =
-		state === 'non-idle'
-		  ? navigation.state !== 'idle'
-		  : navigation.state === state;
+    state === 'non-idle'
+      ? navigation.state !== 'idle'
+      : navigation.state === state;
   return (
     isPendingState &&
-		navigation.formAction === (formAction ?? contextualFormAction) &&
-		navigation.formMethod === formMethod
+    navigation.formAction === (formAction ?? contextualFormAction) &&
+    navigation.formMethod === formMethod
   );
 }
 
@@ -185,7 +185,7 @@ export function useDelayedIsPending({
   delay = 400,
   minDuration = 300,
 }: Parameters<typeof useIsPending>[0] &
-	Parameters<typeof useSpinDelay>[1] = {}) {
+  Parameters<typeof useSpinDelay>[1] = {}) {
   const isPending = useIsPending({ formAction, formMethod });
   const delayedIsPending = useSpinDelay(isPending, {
     delay,
@@ -213,15 +213,15 @@ export function useDoubleCheck() {
     props?: React.ButtonHTMLAttributes<HTMLButtonElement>,
   ) {
     const onBlur: React.ButtonHTMLAttributes<HTMLButtonElement>['onBlur'] =
-			() => setDoubleCheck(false);
+      () => setDoubleCheck(false);
 
     const onClick: React.ButtonHTMLAttributes<HTMLButtonElement>['onClick'] =
-			doubleCheck
-			  ? undefined
-			  : (e) => {
-			    e.preventDefault();
-			    setDoubleCheck(true);
-			  };
+      doubleCheck
+        ? undefined
+        : (e) => {
+          e.preventDefault();
+          setDoubleCheck(true);
+        };
 
     const onKeyUp: React.ButtonHTMLAttributes<HTMLButtonElement>['onKeyUp'] = (
       e,
@@ -293,3 +293,12 @@ export async function downloadFile(url: string, retries: number = 0) {
     return downloadFile(url, retries + 1);
   }
 }
+
+export function convertTimeToMinutes(hours: number, minutes: number) {
+  return (hours * 60) + minutes;
+}
+
+export function convertMinutesToTime(minutes: number) {
+  return [Math.floor(minutes / 60), minutes % 60];
+}
+

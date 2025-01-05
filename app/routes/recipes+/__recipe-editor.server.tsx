@@ -1,3 +1,4 @@
+
 import { parseWithZod } from '@conform-to/zod';
 // import { createId as cuid } from '@paralleldrive/cuid2';
 import { type Prisma } from '@prisma/client';
@@ -9,16 +10,13 @@ import {
   unstable_parseMultipartFormData as parseMultipartFormData,
 } from '@remix-run/node';
 import { prisma } from '#app/utils/db.server.ts';
-import { 
+import { convertTimeToMinutes } from '#app/utils/misc.tsx';
+import {
   RecipeNewSchema,
   MAX_UPLOAD_SIZE,
   type ImageFieldset,
 } from './__recipe-editor.tsx';
-
-// TODO: should this move to the helper file?
-function convertTimeToMinutes(hours: number, minutes: number) {
-  return (hours * 60) + minutes;
-}
+import { CircleArrowOutDownLeftIcon } from 'lucide-react';
 
 function imageHasFile(image: ImageFieldset): image is ImageFieldset & { file: NonNullable<ImageFieldset['file']> } {
   return Boolean(image.file?.size && image.file?.size > 0);
@@ -90,15 +88,16 @@ export async function action({ request }: ActionFunctionArgs) {
     prepMinutes,
     difficulty,
     ingredients,
-    // imageUpdates = [],
+    imageUpdates = [],
     newImages = [],
+    id: recipeId,
   } = submission.value;
 
   // process the ingredients. If there is one without an ingredientId, we should create it first, so we can link it to this recipe correctly
 
   // call Promise.all in case we need to create a new ingredient, which is an async operation, and we want the var to not be a promise
   const processedIngredients = await Promise.all(ingredients.map(async (ingredient) => {
-    let {ingredientId} = ingredient;
+    let { ingredientId } = ingredient;
     if (!ingredientId) {
       const newIngredient = await prisma.ingredient.create({
         data: {
@@ -114,23 +113,38 @@ export async function action({ request }: ActionFunctionArgs) {
       ingredientId,
       quantity: ingredient.quantity,
       unitId: ingredient.unitId,
+      recipeId: ingredient.recipeId,
     });
   }));
 
-  let newRecipe: Prisma.RecipeCreateInput;
-  newRecipe = {
+  const createIngredients = processedIngredients.filter(i => !i.recipeId).map(i => ({
+    ingredientId: i.ingredientId,
+    quantity: i.quantity,
+    unitId: i.unitId,
+  }));
+
+  const updateIngredients = processedIngredients.filter(i => i.recipeId).map(i => ({
+    ingredientId: i.ingredientId,
+    quantity: i.quantity,
+    unitId: i.unitId,
+  }));
+
+
+  const commonRecipeFields = {
     name,
     instructions,
-    ingredients: {
-      create: [
-        ...processedIngredients,
-      ],
-    },
     cookTemp, // TODO: change schema from number to string, to accomodate for "low/high" cooking temp
     cookTime: convertTimeToMinutes(cookHours, cookMinutes),
-    difficulty,
     prepTime: convertTimeToMinutes(prepHours, prepMinutes),
+    difficulty,
     servings,
+  };
+
+  const newRecipe: Prisma.RecipeCreateInput = {
+    ...commonRecipeFields,
+    ingredients: {
+      create: createIngredients,
+    },
     image: {
       // TODO: we should be able to delete or update the image
       // delete: { id: { notIn: imageUpdates.map((i) => i.id) } },
@@ -142,9 +156,40 @@ export async function action({ request }: ActionFunctionArgs) {
     },
   };
 
-  const createdRecipe = await prisma.recipe.create({
-    data: { ...newRecipe },
+  const updateRecipe: Prisma.RecipeUpdateInput = {
+    ...commonRecipeFields,
+    ingredients: {
+      deleteMany: {
+        ingredientId: {
+          notIn: processedIngredients.map((i) => i.ingredientId),
+        },
+      },
+      updateMany: updateIngredients.map(update => ({
+        where: { ingredientId: update.ingredientId },
+        data: { ...update },
+      })),
+      create: createIngredients,
+    },
+    image: {
+      deleteMany: {
+        id: {
+          notIn: imageUpdates.map(i => i.id),
+        },
+      },
+      updateMany: imageUpdates.map(update => ({
+        where: { id: update.id },
+        data: { ...update },
+      })),
+      create: newImages,
+    }
+  };
+
+  const updatedRecipe = await prisma.recipe.upsert({
+    select: { id: true },
+    where: { id: recipeId },
+    create: { ...newRecipe },
+    update: { ...updateRecipe },
   });
 
-  return redirect(`/recipes/${createdRecipe.id}`);
+  return redirect(`/recipes/${updatedRecipe.id}`);
 }

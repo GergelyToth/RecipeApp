@@ -2,7 +2,7 @@ import { json, useLoaderData, type MetaFunction } from '@remix-run/react';
 import { prisma } from '#app/utils/db.server.ts';
 import { RecipeEditor } from './__recipe-editor.tsx';
 
-export { action } from './new.server.tsx';
+export { action } from './__recipe-editor.server.tsx';
 
 export const meta: MetaFunction<typeof loader> = () => [{
   title: 'New Recipe',
@@ -33,18 +33,6 @@ export async function loader() {
   });
   return json({ ingredients, units });
 }
-
-export interface Unit {
-  id: string;
-  name: string;
-}
-
-export interface Ingredient {
-  id: string;
-  name: string;
-  defaultUnit: Unit;
-}
-
 export default function NewRecipe() {
   const { ingredients, units } = useLoaderData<typeof loader>();
 
