@@ -77,4 +77,13 @@
 
     --ring: 217.2 32.6% 60%;
   }
+
+  /* TODO: add some sensible defaults maybe? */
+  .remove-all {
+    all: revert;
+  }
+
+  .remove-all * {
+    all: revert;
+  }
 }

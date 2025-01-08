@@ -1,6 +1,7 @@
 import { invariantResponse } from '@epic-web/invariant';
 import { json, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
+import { marked } from 'marked';
 import { type FC } from 'react';
 import { Avatar, AvatarFallback } from '#app/components/ui/avatar.tsx';
 import { Badge } from '#app/components/ui/badge.tsx';
@@ -81,6 +82,9 @@ export default function SingleRecipe() {
     badges.push(`Cook temp: ${recipe.cookTemp}C°`);
   }
 
+  // NOTE: instructions have been serialized with the `insane` package.
+  const instructionsMarkdown = { __html: marked.parse(recipe.instructions || '') };
+
   return (
     <div>
       <header className={cn('h-64 relative flex overflow-hidden rounded-b-xl')}>
@@ -146,8 +150,7 @@ export default function SingleRecipe() {
             <TabsTrigger value='ingredients' className={cn('grow')}>Ingredients</TabsTrigger>
           </TabsList>
           <TabsContent value='instructions' className={cn('px-2 pt-2')}>
-            {/* TODO: format! */}
-            <p className={cn('whitespace-break-spaces text-sm md:text-md')}>{recipe.instructions}</p>
+            <div className={cn('remove-all')} dangerouslySetInnerHTML={instructionsMarkdown} />
           </TabsContent>
 
           <TabsContent value='ingredients' className={cn('px-2 pt-2')}>

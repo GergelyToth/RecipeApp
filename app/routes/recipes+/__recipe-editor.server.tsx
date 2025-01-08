@@ -1,6 +1,5 @@
 
 import { parseWithZod } from '@conform-to/zod';
-// import { createId as cuid } from '@paralleldrive/cuid2';
 import { type Prisma } from '@prisma/client';
 import {
   type ActionFunctionArgs,
@@ -9,6 +8,7 @@ import {
   unstable_createMemoryUploadHandler as createMemoryUploadHandler,
   unstable_parseMultipartFormData as parseMultipartFormData,
 } from '@remix-run/node';
+import DOMPurify from 'isomorphic-dompurify';
 import { prisma } from '#app/utils/db.server.ts';
 import { convertTimeToMinutes } from '#app/utils/misc.tsx';
 import {
@@ -16,7 +16,6 @@ import {
   MAX_UPLOAD_SIZE,
   type ImageFieldset,
 } from './__recipe-editor.tsx';
-import { CircleArrowOutDownLeftIcon } from 'lucide-react';
 
 function imageHasFile(image: ImageFieldset): image is ImageFieldset & { file: NonNullable<ImageFieldset['file']> } {
   return Boolean(image.file?.size && image.file?.size > 0);
@@ -93,8 +92,9 @@ export async function action({ request }: ActionFunctionArgs) {
     id: recipeId,
   } = submission.value;
 
-  // process the ingredients. If there is one without an ingredientId, we should create it first, so we can link it to this recipe correctly
+  const sanitizedInstructions = DOMPurify.sanitize(instructions);
 
+  // process the ingredients. If there is one without an ingredientId, we should create it first, so we can link it to this recipe correctly
   // call Promise.all in case we need to create a new ingredient, which is an async operation, and we want the var to not be a promise
   const processedIngredients = await Promise.all(ingredients.map(async (ingredient) => {
     let { ingredientId } = ingredient;
@@ -129,10 +129,9 @@ export async function action({ request }: ActionFunctionArgs) {
     unitId: i.unitId,
   }));
 
-
   const commonRecipeFields = {
     name,
-    instructions,
+    instructions: sanitizedInstructions,
     cookTemp, // TODO: change schema from number to string, to accomodate for "low/high" cooking temp
     cookTime: convertTimeToMinutes(cookHours, cookMinutes),
     prepTime: convertTimeToMinutes(prepHours, prepMinutes),
@@ -140,18 +139,13 @@ export async function action({ request }: ActionFunctionArgs) {
     servings,
   };
 
+  // creating and updating recipes are different :)
   const newRecipe: Prisma.RecipeCreateInput = {
     ...commonRecipeFields,
     ingredients: {
       create: createIngredients,
     },
     image: {
-      // TODO: we should be able to delete or update the image
-      // delete: { id: { notIn: imageUpdates.map((i) => i.id) } },
-      // update: imageUpdates.map((updates) => ({
-      //   where: { id: updates.id },
-      //   data: { ...updates, id: updates.blob ? cuid() : updates.id },
-      // })),
       create: newImages,
     },
   };
@@ -181,7 +175,7 @@ export async function action({ request }: ActionFunctionArgs) {
         data: { ...update },
       })),
       create: newImages,
-    }
+    },
   };
 
   const updatedRecipe = await prisma.recipe.upsert({
