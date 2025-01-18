@@ -3,13 +3,11 @@ import { json, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/nod
 import { Link, useLoaderData } from '@remix-run/react';
 import { marked } from 'marked';
 import { type FC } from 'react';
-import { Avatar, AvatarFallback } from '#app/components/ui/avatar.tsx';
 import { Badge } from '#app/components/ui/badge.tsx';
 import { Icon } from '#app/components/ui/icon.tsx';
 import { Rate } from '#app/components/ui/rate.tsx';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#app/components/ui/tabs.tsx';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '#app/components/ui/tooltip.tsx';
 import { prisma } from '#app/utils/db.server.ts';
 import { cn, getRecipeImgSrc } from '#app/utils/misc.tsx';
 
@@ -120,20 +118,6 @@ export default function SingleRecipe() {
       <div className={cn('max-w-screen-md px-6 mx-auto')}>
         {/* Source */}
         <div className={cn('flex gap-4 items-center mt-6')}>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Avatar>
-                  {/* TODO: add source image? */}
-                  <AvatarFallback>{recipe.source?.name?.substring(0, 1)}</AvatarFallback>
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent>
-                {recipe.source?.name}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
           <h1 className={cn('text-h5')}>{recipe.name}</h1>
         </div>
 

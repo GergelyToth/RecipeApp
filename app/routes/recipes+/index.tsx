@@ -1,11 +1,13 @@
 import { invariantResponse } from '@epic-web/invariant';
 import { json } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import React from 'react';
-import { Button } from '#app/components/ui/button.tsx';
+import React, { useState } from 'react';
+import { Filter } from '#app/components/filter.tsx';
+import { Button } from '#app/components/ui/button';
 import { Card, CardHeader, CardContent } from '#app/components/ui/card';
-import { prisma } from '#app/utils/db.server.ts';
-import { cn, getRecipeImgSrc } from '#app/utils/misc.tsx';
+import { Search } from '#app/components/ui/search';
+import { prisma } from '#app/utils/db.server';
+import { cn, getRecipeImgSrc } from '#app/utils/misc';
 
 export async function loader() {
   const recipes = await prisma.recipe.findMany({
@@ -19,6 +21,15 @@ export async function loader() {
           altText: true,
         },
       },
+      ingredients: {
+        select: {
+          ingredient: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -28,19 +39,57 @@ export async function loader() {
 }
 
 export default function Recipes() {
+  const [searchValue, setSearchValue] = useState<string>('');
   const { recipes } = useLoaderData<typeof loader>();
+  const [ingredientFilterValues, setIngredientFilterValues] = useState<string[] | undefined>([]);
+
+  // NOTE: this is client side search only, with the assumption we don't need to re-query the db, as we returned everything on page load
+  let resultRecipes: typeof recipes = [...recipes];
+  if (searchValue !== '') {
+    resultRecipes = recipes.filter(recipe => recipe.name.toLowerCase().includes(searchValue.toLowerCase()));
+  }
+
+  if (ingredientFilterValues?.length) {
+    resultRecipes = resultRecipes.filter(recipe =>
+      recipe.ingredients.filter(i => ingredientFilterValues?.includes(i.ingredient.name)).length > 0,
+    );
+  }
+
+  const allIngredients: string[] = [];
+  recipes.forEach(recipe => {
+    recipe?.ingredients.forEach(i => {
+      const { ingredient } = i;
+      if (!allIngredients.includes(ingredient.name)) {
+        allIngredients.push(ingredient.name);
+      }
+    });
+  });
 
   return (
     <div>
       <h1 className={cn('text-h1')}>Recipes</h1>
 
+
+      <div className={cn('flex column gap-4 place-items-center my-4')}>
+        <Filter
+          title='Filter by Ingredients'
+          setFilterValues={setIngredientFilterValues}
+          options={allIngredients.toSorted().map((x: string) => ({ label: x, value: x }))}
+        />
+
+        <Search
+          onChange={(e) => setSearchValue(e.target.value)} value={searchValue}
+        />
+      </div>
+
+
       <Button className={cn('my-4')}>
         <Link to="/recipes/new">Create Recipe</Link>
       </Button>
 
-      {recipes.length > 0 && (
+      {resultRecipes.length > 0 && (
         <div className={cn('flex flex-wrap max-w-full gap-8')}>
-          {recipes.map((recipe) => {
+          {resultRecipes.map((recipe) => {
             const hasImage = recipe.image.length > 0 && recipe.image[0] && recipe.image[0].id;
 
             return (
